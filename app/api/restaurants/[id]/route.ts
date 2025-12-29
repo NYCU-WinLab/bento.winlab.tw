@@ -11,14 +11,20 @@ export async function GET(
   const { id } = await params
   const supabase = await createClient()
 
+  // Use maybeSingle() to avoid 500 error when no rows are returned
   const { data: restaurant, error } = await supabase
     .from('restaurants')
     .select('*, menu_items(*)')
     .eq('id', id)
-    .single()
+    .maybeSingle()
 
   if (error) {
+    console.error('Error fetching restaurant:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (!restaurant) {
+    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
   }
 
   return NextResponse.json(restaurant)
