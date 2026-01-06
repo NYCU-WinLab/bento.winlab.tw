@@ -6,7 +6,7 @@ const openai = new OpenAI({
 
 export interface MenuItem {
   name: string;
-  price: string;
+  price: number;
 }
 
 export async function parseMenuImage(imageFile: File): Promise<MenuItem[]> {
@@ -17,20 +17,32 @@ export async function parseMenuImage(imageFile: File): Promise<MenuItem[]> {
     const mimeType = imageFile.type;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.2",
+      model: "gpt-5.2", // Supports vision and structured outputs
       messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant that extracts menu items from images. Always return valid JSON in the exact format specified.",
+        },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `Analyze this menu image and extract all menu items with their prices. Return a JSON array in this exact format:
-[
-  { "name": "Menu Item", "price": "Item Price" },
-  ...
-]
+              text: `Analyze this menu image and extract all menu items with their prices.
 
-Only return the JSON array, no other text. Prices should be strings.`,
+Return a JSON object with this exact structure:
+{
+  "menu_items": [
+    { "name": "Menu Item Name", "price": "Price as string" },
+    ...
+  ]
+}
+
+Requirements:
+- Extract ALL menu items visible in the image
+- Prices must be strings (e.g., "100", "150", "NT$200")
+- Return only valid JSON, no additional text or markdown formatting`,
             },
             {
               type: "image_url",
@@ -41,6 +53,40 @@ Only return the JSON array, no other text. Prices should be strings.`,
           ],
         },
       ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "menu_items_response",
+          description: "Menu items extracted from a menu image",
+          schema: {
+            type: "object",
+            properties: {
+              menu_items: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: {
+                      type: "string",
+                      description: "Name of the menu item",
+                    },
+                    price: {
+                      type: "number",
+                      description:
+                        "Price of the menu item as a number (e.g. 100, 200)",
+                    },
+                  },
+                  required: ["name", "price"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["menu_items"],
+            additionalProperties: false,
+          },
+          strict: true,
+        },
+      },
       max_completion_tokens: 2000,
     });
 
@@ -49,22 +95,19 @@ Only return the JSON array, no other text. Prices should be strings.`,
       throw new Error("No response from OpenAI");
     }
 
-    // Parse JSON from response
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("No JSON array found in response");
-    }
-
-    const menuItems: MenuItem[] = JSON.parse(jsonMatch[0]);
+    // Parse JSON from response (should be valid JSON now)
+    const parsed = JSON.parse(content);
 
     // Validate structure
-    if (!Array.isArray(menuItems)) {
-      throw new Error("Response is not an array");
+    if (!parsed.menu_items || !Array.isArray(parsed.menu_items)) {
+      throw new Error("Invalid response structure: menu_items array not found");
     }
 
-    return menuItems.map((item) => ({
-      name: item.name?.trim() || "",
-      price: item.price?.trim() || "",
+    return parsed.menu_items.map((item: any) => ({
+      name: String(item.name ?? "").trim(),
+      // Ensure price is a number; convert or default to 0
+      price:
+        typeof item.price === "number" ? item.price : Number(item.price) || 0,
     }));
   } catch (error) {
     console.error("Error parsing menu image:", error);

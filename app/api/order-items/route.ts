@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const body = await request.json()
 
   const { data: orderItem, error } = await supabase
-    .from('order_items')
+    .from('bento_order_items')
     .insert({
       order_id: body.order_id,
       menu_item_id: body.menu_item_id,

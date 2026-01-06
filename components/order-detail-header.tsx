@@ -1,59 +1,71 @@
-'use client'
+"use client";
 
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
-import { format } from 'date-fns'
-// @ts-ignore - date-fns locale type definition issue
-import zhTWLocale from 'date-fns/locale/zh-TW'
+import { OrderStats } from "./order-stats";
+import { Badge } from "./ui/badge";
 
-interface Order {
-  id: string
-  restaurant_id: string
-  status: 'active' | 'closed'
-  created_at: string
-  closed_at: string | null
-  restaurants: {
-    id: string
-    name: string
-    phone: string
-  }
+interface OrderItem {
+  menu_item_id: string;
+  no_sauce?: boolean;
+  menu_items: {
+    name: string;
+    price: number;
+  };
+  user_id: string;
 }
 
-export function OrderDetailHeader({
-  order,
-  isAdmin,
-  adminLoading,
-  onClose,
-}: {
-  order: Order
-  isAdmin: boolean
-  adminLoading?: boolean
-  onClose: () => void
-}) {
+interface Order {
+  id: string;
+  restaurant_id: string;
+  status: "active" | "closed";
+  created_at: string;
+  closed_at: string | null;
+  restaurants: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+  order_items?: OrderItem[];
+}
+
+// Parse order date from ID (yyyymmdd format)
+function parseOrderDate(orderId: string): string {
+  if (orderId.length === 8 && /^\d{8}$/.test(orderId)) {
+    const year = orderId.substring(0, 4);
+    const month = orderId.substring(4, 6);
+    const day = orderId.substring(6, 8);
+    return `${year}/${month}/${day}`;
+  }
+  return orderId; // Fallback to ID if format is unexpected
+}
+
+export function OrderDetailHeader({ order }: { order: Order }) {
+  const orderDate = parseOrderDate(order.id);
+  const orderItems = order.order_items || [];
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{order.restaurants.name}</h1>
-          <p className="text-muted-foreground">電話: {order.restaurants.phone}</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Badge variant={order.status === 'active' ? 'default' : 'secondary'}>
-            {order.status === 'active' ? '進行中' : '已結束'}
-          </Badge>
-          {!adminLoading && isAdmin && order.status === 'active' && (
-            <Button onClick={onClose} variant="destructive">
-              關閉訂單
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold mb-2">
+              {order.restaurants.name}
+            </h1>
+            <Badge variant="default" className="text-sm">
+              {orderDate}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground">
+            電話：
+            <a
+              href={`tel:${order.restaurants.phone}`}
+              className="text-primary hover:underline"
+            >
+              {order.restaurants.phone}
+            </a>
+          </p>
         </div>
       </div>
-      <div className="text-sm text-muted-foreground">
-        <p>建立時間: {format(new Date(order.created_at), 'yyyy/MM/dd HH:mm', { locale: zhTWLocale })}</p>
-        {order.closed_at && (
-          <p>結束時間: {format(new Date(order.closed_at), 'yyyy/MM/dd HH:mm', { locale: zhTWLocale })}</p>
-        )}
-      </div>
+      <OrderStats orderItems={orderItems} />
     </div>
-  )
+  );
 }

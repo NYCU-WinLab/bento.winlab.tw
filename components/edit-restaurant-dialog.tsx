@@ -48,10 +48,16 @@ export function EditRestaurantDialog({
   const [name, setName] = useState(restaurant.name)
   const [phone, setPhone] = useState(restaurant.phone)
   const [menuItems, setMenuItems] = useState<MenuParserItem[]>(
-    existingMenuItems.map((item) => ({
-      name: item.name,
-      price: String(item.price),
-    }))
+    existingMenuItems
+      .map((item) => ({
+        name: item.name,
+        price: String(item.price),
+      }))
+      .sort((a, b) => {
+        const priceA = parseFloat(a.price) || 0
+        const priceB = parseFloat(b.price) || 0
+        return priceA - priceB
+      })
   )
   const [loading, setLoading] = useState(false)
 
@@ -61,7 +67,7 @@ export function EditRestaurantDialog({
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/restaurants/${restaurant.id}`, {
+      const res = await fetch(`/api/menus/${restaurant.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +130,20 @@ export function EditRestaurantDialog({
             <div className="space-y-2">
               <Label>重新上傳菜單圖片（選填）</Label>
               <MenuImageUpload
-                onParseComplete={(items) => setMenuItems(items as MenuParserItem[])}
+                onParseComplete={(items) => {
+                  // Sort items by price (ascending)
+                  const sortedItems = [...items]
+                    .map((item) => ({
+                      name: item.name,
+                      price: String(item.price),
+                    }))
+                    .sort((a, b) => {
+                      const priceA = parseFloat(a.price) || 0
+                      const priceB = parseFloat(b.price) || 0
+                      return priceA - priceB
+                    })
+                  setMenuItems(sortedItems)
+                }}
               />
             </div>
             <div className="space-y-2">

@@ -1,13 +1,17 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Skeleton } from '../ui/skeleton'
-import { Button } from '../ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
 
 export function RestaurantListSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">店家列表</h1>
-        <Skeleton className="h-10 w-24" />
+      <div className="mb-6">
+        <h1 className="text-xl font-bold">店家列表</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -33,11 +37,15 @@ export function RestaurantListSkeleton() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">結單次數</p>
+                    <p className="text-base text-muted-foreground mb-1">
+                      結單次數
+                    </p>
                     <Skeleton className="h-7 w-12" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">總消費</p>
+                    <p className="text-base text-muted-foreground mb-1">
+                      總消費
+                    </p>
                     <Skeleton className="h-7 w-20" />
                   </div>
                 </div>
@@ -45,7 +53,10 @@ export function RestaurantListSkeleton() {
                   <h3 className="font-semibold mb-2">品項</h3>
                   <div className="space-y-2">
                     {[1, 2, 3].map((j) => (
-                      <div key={j} className="flex items-center justify-between p-2 border rounded">
+                      <div
+                        key={j}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Skeleton className="h-4 w-24" />
@@ -64,6 +75,5 @@ export function RestaurantListSkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
-

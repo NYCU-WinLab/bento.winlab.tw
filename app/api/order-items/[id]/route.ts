@@ -15,7 +15,7 @@ export async function DELETE(
 
   // Check if the order item belongs to the user
   const { data: orderItem, error: fetchError } = await supabase
-    .from('order_items')
+    .from('bento_order_items')
     .select('user_id, order_id')
     .eq('id', id)
     .single()
@@ -30,7 +30,7 @@ export async function DELETE(
 
   // Check if order is still active
   const { data: order, error: orderError } = await supabase
-    .from('orders')
+    .from('bento_orders')
     .select('status')
     .eq('id', orderItem.order_id)
     .single()
@@ -43,7 +43,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot delete item from closed order' }, { status: 400 })
   }
 
-  const { error } = await supabase.from('order_items').delete().eq('id', id)
+  const { error } = await supabase.from('bento_order_items').delete().eq('id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

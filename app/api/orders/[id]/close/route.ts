@@ -12,7 +12,7 @@ export async function POST(
     const supabase = await createClient()
 
     const { data: order, error } = await supabase
-      .from('orders')
+      .from('bento_orders')
       .update({
         status: 'closed',
         closed_at: new Date().toISOString(),

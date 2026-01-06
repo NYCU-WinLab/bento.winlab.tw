@@ -1,9 +1,9 @@
+import HeaderBar from "@/components/header-bar";
+import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "next-themes";
-import { SupabaseProvider } from "@/components/providers/supabase-provider";
-import HeaderBar from "@/components/header-bar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

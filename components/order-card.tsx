@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Card } from "./ui/card";
+import { OrderStats } from "./order-stats";
 import { Badge } from "./ui/badge";
-import { format } from "date-fns";
-// @ts-ignore - date-fns locale type definition issue
-import { zhTW } from "date-fns/locale/zh-TW";
+import { Card } from "./ui/card";
+
+interface OrderItem {
+  menu_item_id: string;
+  no_sauce?: boolean;
+  menu_items: {
+    name: string;
+    price: number;
+  };
+  user_id: string;
+}
 
 interface Order {
   id: string;
@@ -16,42 +24,41 @@ interface Order {
   restaurants: {
     name: string;
   };
-  created_by_user?: {
-    name: string;
-    email: string;
-  } | null;
+  order_items?: OrderItem[];
+}
+
+// Parse order date from ID (yyyymmdd format)
+function parseOrderDate(orderId: string): string {
+  if (orderId.length === 8 && /^\d{8}$/.test(orderId)) {
+    const year = orderId.substring(0, 4);
+    const month = orderId.substring(4, 6);
+    const day = orderId.substring(6, 8);
+    return `${year}/${month}/${day}`;
+  }
+  return orderId; // Fallback to ID if format is unexpected
 }
 
 export function OrderCard({ order }: { order: Order }) {
+  const orderDate = parseOrderDate(order.id);
+  const orderItems = order.order_items || [];
+
   return (
     <Link href={`/orders/${order.id}`}>
-      <Card className="p-4 mb-4 hover:bg-accent transition-colors cursor-pointer">
+      <Card className="p-4 mb-3 hover:bg-accent transition-colors cursor-pointer">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="font-semibold text-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-xl">
                 {order.restaurants.name}
               </h3>
               <Badge
-                variant={order.status === "active" ? "default" : "secondary"}
+                variant={order.status === "active" ? "default" : "outline"}
+                className="text-sm"
               >
-                {order.status === "active" ? "進行中" : "已結束"}
+                {orderDate}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-              建立時間:{" "}
-              {format(new Date(order.created_at), "yyyy/MM/dd HH:mm", {
-                locale: zhTW,
-              })}
-            </p>
-            {order.closed_at && (
-              <p className="text-sm text-muted-foreground">
-                結束時間:{" "}
-                {format(new Date(order.closed_at), "yyyy/MM/dd HH:mm", {
-                  locale: zhTW,
-                })}
-              </p>
-            )}
+            <OrderStats orderItems={orderItems} />
           </div>
         </div>
       </Card>

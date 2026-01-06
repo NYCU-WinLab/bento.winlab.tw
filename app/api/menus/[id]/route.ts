@@ -12,22 +12,22 @@ export async function GET(
   const supabase = await createClient()
 
   // Use maybeSingle() to avoid 500 error when no rows are returned
-  const { data: restaurant, error } = await supabase
-    .from('restaurants')
-    .select('*, menu_items(*)')
+  const { data: menu, error } = await supabase
+    .from('bento_menus')
+    .select('*, menu_items:bento_menu_items(*)')
     .eq('id', id)
     .maybeSingle()
 
   if (error) {
-    console.error('Error fetching restaurant:', error)
+    console.error('Error fetching menu:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  if (!restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  if (!menu) {
+    return NextResponse.json({ error: 'Menu not found' }, { status: 404 })
   }
 
-  return NextResponse.json(restaurant)
+  return NextResponse.json(menu)
 }
 
 export async function PUT(
@@ -40,8 +40,8 @@ export async function PUT(
     const supabase = await createClient()
     const body = await request.json()
 
-    const { data: restaurant, error } = await supabase
-      .from('restaurants')
+    const { data: menu, error } = await supabase
+      .from('bento_menus')
       .update({
         name: body.name,
         phone: body.phone,
@@ -58,18 +58,18 @@ export async function PUT(
     // Update menu items if provided
     if (body.menu_items && Array.isArray(body.menu_items)) {
       // Delete existing menu items
-      await supabase.from('menu_items').delete().eq('restaurant_id', id)
+      await supabase.from('bento_menu_items').delete().eq('restaurant_id', id)
 
       // Insert new menu items
       if (body.menu_items.length > 0) {
-        const menuItems = body.menu_items.map((item: { name: string; price: string }) => ({
+        const menuItems = body.menu_items.map((item: { name: string; price: string | number }) => ({
           restaurant_id: id,
           name: item.name,
-          price: parseFloat(item.price) || 0,
+          price: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)) || 0,
         }))
 
         const { error: menuError } = await supabase
-          .from('menu_items')
+          .from('bento_menu_items')
           .insert(menuItems)
 
         if (menuError) {
@@ -78,7 +78,7 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json(restaurant)
+    return NextResponse.json(menu)
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unauthorized' },
@@ -96,9 +96,9 @@ export async function DELETE(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check if restaurant has active orders
+    // Check if menu has active orders
     const { data: activeOrders } = await supabase
-      .from('orders')
+      .from('bento_orders')
       .select('id')
       .eq('restaurant_id', id)
       .eq('status', 'active')
@@ -111,7 +111,7 @@ export async function DELETE(
       )
     }
 
-    const { error } = await supabase.from('restaurants').delete().eq('id', id)
+    const { error } = await supabase.from('bento_menus').delete().eq('id', id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

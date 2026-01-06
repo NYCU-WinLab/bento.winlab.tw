@@ -1,138 +1,170 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { OrderDetailHeader } from './order-detail-header'
-import { OrderSummary } from './order-summary'
-import { OrderItemsList } from './order-items-list'
-import { AddOrderItemDialog } from './add-order-item-dialog'
-import { useSupabase } from '@/components/providers/supabase-provider'
-import { isAdmin } from '@/lib/utils/admin-client'
-import { OrderDetailSkeleton } from './skeletons/order-detail-skeleton'
-import { useCachedFetch } from '@/lib/hooks/use-cached-fetch'
+import { useSupabase } from "@/components/providers/supabase-provider";
+import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { isAdmin } from "@/lib/utils/admin-client";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { OrderDetailHeader } from "./order-detail-header";
+import { OrderItemsList } from "./order-items-list";
+import { OrderDetailSkeleton } from "./skeletons/order-detail-skeleton";
 
 interface OrderItem {
-  id: string
-  menu_item_id: string
-  no_sauce: boolean
-  user_id: string
+  id: string;
+  menu_item_id: string;
+  no_sauce: boolean;
+  user_id: string;
   menu_items: {
-    name: string
-    price: number
-  }
+    name: string;
+    price: number;
+  };
   user: {
-    name: string
-    email: string
-  }
+    name: string | null;
+    email?: string;
+  } | null;
 }
 
 interface Order {
-  id: string
-  restaurant_id: string
-  status: 'active' | 'closed'
-  created_at: string
-  closed_at: string | null
+  id: string;
+  restaurant_id: string;
+  status: "active" | "closed";
+  created_at: string;
+  closed_at: string | null;
   restaurants: {
-    id: string
-    name: string
-    phone: string
-  }
-  order_items: OrderItem[]
+    id: string;
+    name: string;
+    phone: string;
+  };
+  order_items: OrderItem[];
 }
 
 export function OrderDetail({ orderId }: { orderId: string }) {
-  const [isAdminUser, setIsAdminUser] = useState(false)
-  const [adminLoading, setAdminLoading] = useState(true)
-  const { user } = useSupabase()
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
+  const { user } = useSupabase();
+  const router = useRouter();
 
-  const { data: order, loading, refetch, invalidateCache, updateData } = useCachedFetch<Order>({
+  const {
+    data: order,
+    loading,
+    refetch,
+    invalidateCache,
+    updateData,
+  } = useCachedFetch<Order>({
     cacheKey: `order_${orderId}`,
     fetchFn: async () => {
-      const res = await fetch(`/api/orders/${orderId}`)
+      const res = await fetch(`/api/orders/${orderId}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch order')
+        throw new Error("Failed to fetch order");
       }
-      return res.json()
+      return res.json();
     },
     skipCache: !orderId,
-  })
+  });
 
   useEffect(() => {
     if (user) {
-      checkAdmin()
+      checkAdmin();
     } else {
-      setAdminLoading(false)
+      setAdminLoading(false);
     }
-  }, [user])
+  }, [user]);
+
+  // Listen for order update events to refresh the order detail
+  useEffect(() => {
+    const handleOrderUpdate = () => {
+      // Refresh this order's data
+      invalidateCache();
+      refetch();
+    };
+
+    window.addEventListener("order-updated", handleOrderUpdate);
+    return () => {
+      window.removeEventListener("order-updated", handleOrderUpdate);
+    };
+  }, [invalidateCache, refetch]);
 
   const checkAdmin = async () => {
     if (!user) {
-      setAdminLoading(false)
-      return
+      setAdminLoading(false);
+      return;
     }
     try {
-      const admin = await isAdmin(user.id)
-      setIsAdminUser(admin)
+      const admin = await isAdmin(user.id);
+      setIsAdminUser(admin);
     } catch {
-      setIsAdminUser(false)
+      setIsAdminUser(false);
     } finally {
-      setAdminLoading(false)
+      setAdminLoading(false);
     }
-  }
+  };
 
   const handleCloseOrder = async () => {
     try {
       const res = await fetch(`/api/orders/${orderId}/close`, {
-        method: 'POST',
-      })
+        method: "POST",
+      });
       if (res.ok) {
         // Clear cache and force refresh
-        invalidateCache()
+        invalidateCache();
         // Also clear orders list cache
-        const { clearCache } = await import('@/lib/utils/cache')
-        clearCache('orders')
-        refetch()
+        const { clearCache } = await import("@/lib/utils/cache");
+        clearCache("orders");
+        refetch();
       }
     } catch (error) {
-      console.error('Error closing order:', error)
+      console.error("Error closing order:", error);
     }
-  }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (
+      !confirm(
+        `確定要刪除訂單「${order?.restaurants.name}」嗎？\n\n此操作將永久刪除訂單，且無法復原。`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete order");
+      }
+
+      // Clear all caches
+      invalidateCache();
+      const { clearCache } = await import("@/lib/utils/cache");
+      clearCache("orders");
+
+      // Redirect to orders list
+      router.push("/");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      alert(error instanceof Error ? error.message : "刪除訂單失敗");
+    }
+  };
 
   if (loading) {
-    return <OrderDetailSkeleton />
+    return <OrderDetailSkeleton />;
   }
 
   if (!order) {
-    return <div className="container mx-auto px-4 py-8">訂單不存在</div>
+    return <div className="container mx-auto px-4 py-8">訂單不存在</div>;
   }
 
-  const isActive = order.status === 'active'
+  const isActive = order.status === "active";
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <OrderDetailHeader
-        order={order}
-        isAdmin={isAdminUser}
-        adminLoading={adminLoading}
-        onClose={handleCloseOrder}
-      />
-
-      {!isActive && <OrderSummary order={order} />}
-
+      <OrderDetailHeader order={order} />
       <div className="mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">訂單項目</h2>
-          {isActive && user && !adminLoading && (
-            <AddOrderItemDialog
-              orderId={order.id}
-              updateOrder={updateData}
-              onSuccess={async () => {
-                // Also clear orders list cache
-                const { clearCache } = await import('@/lib/utils/cache')
-                clearCache('orders')
-              }}
-            />
-          )}
-        </div>
+        <h2 className="text-2xl font-semibold mb-4">訂單項目</h2>
         <OrderItemsList
           items={order.order_items}
           isActive={isActive}
@@ -141,12 +173,11 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           updateOrder={updateData}
           onDelete={async () => {
             // Also clear orders list cache
-            const { clearCache } = await import('@/lib/utils/cache')
-            clearCache('orders')
+            const { clearCache } = await import("@/lib/utils/cache");
+            clearCache("orders");
           }}
         />
       </div>
     </div>
-  )
+  );
 }
-

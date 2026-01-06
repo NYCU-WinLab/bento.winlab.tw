@@ -1,17 +1,11 @@
-import { Card } from '../ui/card'
-import { Skeleton } from '../ui/skeleton'
-import { Badge } from '../ui/badge'
+import { Card } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
 
 export function OrderListSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">訂單列表</h1>
-        <Skeleton className="h-10 w-24" />
-      </div>
-
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">進行中</h2>
+        <h1 className="text-xl font-bold mb-4">進行中</h1>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="p-4">
@@ -31,7 +25,7 @@ export function OrderListSkeleton() {
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">已結束</h2>
+        <h2 className="text-xl font-bold mb-4">已結束</h2>
         <div className="space-y-4">
           {[1, 2].map((i) => (
             <Card key={i} className="p-4">
@@ -50,6 +44,5 @@ export function OrderListSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

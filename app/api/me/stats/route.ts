@@ -11,8 +11,8 @@ export async function GET() {
 
   // Get order count
   const { data: orderItems } = await supabase
-    .from('order_items')
-    .select('order_id, menu_item_id, menu_items(price, name, restaurant_id)')
+    .from('bento_order_items')
+    .select('order_id, menu_item_id, menu_items:bento_menu_items(price, name, restaurant_id)')
     .eq('user_id', user.id)
 
   // Get restaurant names separately
@@ -26,7 +26,7 @@ export async function GET() {
   let restaurantMap = new Map<string, string>()
   if (restaurantIds.size > 0) {
     const { data: restaurants } = await supabase
-      .from('restaurants')
+      .from('bento_menus')
       .select('id, name')
       .in('id', Array.from(restaurantIds))
 

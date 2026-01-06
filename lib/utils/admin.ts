@@ -12,15 +12,20 @@ export async function isAdminServer(userId: string): Promise<boolean> {
   try {
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select('roles')
       .eq('id', userId)
       .single()
 
-    // Check both user_profiles.is_admin and auth.users.metadata.role
-    return user.user_metadata?.role === 'admin' || profile?.is_admin === true
+    // Check user_profiles.roles.bento array for "admin"
+    if (profile?.roles && typeof profile.roles === 'object') {
+      const bentoRoles = profile.roles.bento
+      if (Array.isArray(bentoRoles)) {
+        return bentoRoles.includes('admin')
+      }
+    }
+    return false
   } catch {
-    // If user_profiles table doesn't exist or error, check metadata only
-    return user.user_metadata?.role === 'admin'
+    return false
   }
 }
 

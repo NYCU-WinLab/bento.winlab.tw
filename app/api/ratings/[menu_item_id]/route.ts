@@ -9,7 +9,7 @@ export async function GET(
   const supabase = await createClient()
 
   const { data: ratings, error } = await supabase
-    .from('ratings')
+    .from('bento_ratings')
     .select('*')
     .eq('menu_item_id', menu_item_id)
 
@@ -23,7 +23,7 @@ export async function GET(
 
   if (user) {
     const { data } = await supabase
-      .from('ratings')
+      .from('bento_ratings')
       .select('*')
       .eq('menu_item_id', menu_item_id)
       .eq('user_id', user.id)

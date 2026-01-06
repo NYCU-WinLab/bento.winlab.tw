@@ -12,14 +12,14 @@ export async function GET(
 
   // Get order count
   const { count: orderCount } = await supabase
-    .from('orders')
+    .from('bento_orders')
     .select('*', { count: 'exact', head: true })
     .eq('restaurant_id', id)
     .eq('status', 'closed')
 
   // Get total spending
   const { data: closedOrders } = await supabase
-    .from('orders')
+    .from('bento_orders')
     .select('id')
     .eq('restaurant_id', id)
     .eq('status', 'closed')
@@ -31,8 +31,8 @@ export async function GET(
     const orderIds = closedOrders.map((o) => o.id)
 
     const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('menu_item_id, menu_items(price)')
+      .from('bento_order_items')
+      .select('menu_item_id, menu_items:bento_menu_items(price)')
       .in('order_id', orderIds)
 
     if (orderItems) {
@@ -52,14 +52,14 @@ export async function GET(
 
   // Get menu items with counts and ratings (optimized: fetch all ratings at once)
   const { data: menuItems } = await supabase
-    .from('menu_items')
+    .from('bento_menu_items')
     .select('id, name, price')
     .eq('restaurant_id', id)
 
   // Fetch all ratings for all menu items in one query
   const menuItemIds = (menuItems || []).map((item) => item.id)
   const { data: allRatings } = await supabase
-    .from('ratings')
+    .from('bento_ratings')
     .select('menu_item_id, score')
     .in('menu_item_id', menuItemIds)
 

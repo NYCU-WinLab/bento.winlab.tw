@@ -1,42 +1,41 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Skeleton } from './ui/skeleton'
-import { RestaurantStats } from './restaurant-stats'
-import { EditRestaurantDialog } from './edit-restaurant-dialog'
-import { RatingDialog } from './rating-dialog'
-import { Trash2 } from 'lucide-react'
-import { useCachedFetch } from '@/lib/hooks/use-cached-fetch'
+import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { EditRestaurantDialog } from "./edit-restaurant-dialog";
+import { RestaurantStats } from "./restaurant-stats";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Skeleton } from "./ui/skeleton";
 
 interface MenuItem {
-  id: string
-  name: string
-  price: number
-  order_count?: number
-  average_rating?: number
+  id: string;
+  name: string;
+  price: number;
+  order_count?: number;
+  average_rating?: number;
 }
 
 interface Restaurant {
-  id: string
-  name: string
-  phone: string
-  created_at: string
+  id: string;
+  name: string;
+  phone: string;
+  created_at: string;
 }
 
 interface RestaurantStatsItem {
-  id: string
-  name: string
-  order_count: number
-  total_revenue: number
-  average_rating: number
+  id: string;
+  name: string;
+  order_count: number;
+  total_revenue: number;
+  average_rating: number;
 }
 
 interface RestaurantStatsData {
-  order_count: number
-  total_spending: number
-  items: RestaurantStatsItem[]
+  order_count: number;
+  total_spending: number;
+  items: RestaurantStatsItem[];
 }
 
 export function RestaurantCard({
@@ -44,11 +43,11 @@ export function RestaurantCard({
   isAdmin,
   onUpdate,
 }: {
-  restaurant: Restaurant
-  isAdmin: boolean
-  onUpdate: () => void
+  restaurant: Restaurant;
+  isAdmin: boolean;
+  onUpdate: () => void;
 }) {
-  const [deleting, setDeleting] = useState(false)
+  const [deleting, setDeleting] = useState(false);
 
   const {
     data: restaurantData,
@@ -58,13 +57,13 @@ export function RestaurantCard({
   } = useCachedFetch<{ menu_items: MenuItem[] }>({
     cacheKey: `restaurant_${restaurant.id}_menu`,
     fetchFn: async () => {
-      const res = await fetch(`/api/restaurants/${restaurant.id}`)
+      const res = await fetch(`/api/menus/${restaurant.id}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch restaurant')
+        throw new Error("Failed to fetch restaurant");
       }
-      return res.json()
+      return res.json();
     },
-  })
+  });
 
   const {
     data: stats,
@@ -74,61 +73,66 @@ export function RestaurantCard({
   } = useCachedFetch<RestaurantStatsData>({
     cacheKey: `restaurant_${restaurant.id}_stats`,
     fetchFn: async () => {
-      const res = await fetch(`/api/restaurants/${restaurant.id}/stats`)
+      const res = await fetch(`/api/menus/${restaurant.id}/stats`);
       if (!res.ok) {
-        throw new Error('Failed to fetch restaurant stats')
+        throw new Error("Failed to fetch restaurant stats");
       }
-      return res.json()
+      return res.json();
     },
-  })
+  });
 
-  const menuItems = restaurantData?.menu_items || []
-  const loading = menuLoading || statsLoading
+  const menuItems = restaurantData?.menu_items || [];
+  const loading = menuLoading || statsLoading;
 
   const handleRestaurantUpdate = () => {
-    invalidateMenuCache()
-    invalidateStatsCache()
-    refetchMenu()
-    refetchStats()
-    onUpdate()
-  }
+    invalidateMenuCache();
+    invalidateStatsCache();
+    refetchMenu();
+    refetchStats();
+    onUpdate();
+  };
 
   const handleDelete = async () => {
-    if (!confirm(`確定要刪除「${restaurant.name}」嗎？\n\n此操作將刪除所有相關的品項和訂單記錄，且無法復原。`)) {
-      return
+    if (
+      !confirm(
+        `確定要刪除「${restaurant.name}」嗎？\n\n此操作將刪除所有相關的品項和訂單記錄，且無法復原。`
+      )
+    ) {
+      return;
     }
 
-    setDeleting(true)
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/restaurants/${restaurant.id}`, {
-        method: 'DELETE',
-      })
+      const res = await fetch(`/api/menus/${restaurant.id}`, {
+        method: "DELETE",
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to delete')
+        throw new Error(data.error || "Failed to delete");
       }
 
       // Clear all related cache
-      invalidateMenuCache()
-      invalidateStatsCache()
-      onUpdate()
+      invalidateMenuCache();
+      invalidateStatsCache();
+      onUpdate();
     } catch (error) {
-      console.error('Error deleting restaurant:', error)
-      alert(error instanceof Error ? error.message : '刪除店家失敗')
+      console.error("Error deleting restaurant:", error);
+      alert(error instanceof Error ? error.message : "刪除店家失敗");
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="p-4">
+      <CardHeader className="p-0">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>{restaurant.name}</CardTitle>
-            <CardDescription>電話: {restaurant.phone}</CardDescription>
+            <CardTitle className="text-xl font-bold">
+              {restaurant.name}
+            </CardTitle>
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
@@ -144,30 +148,32 @@ export function RestaurantCard({
                 disabled={deleting}
               >
                 <Trash2 className="w-4 h-4 mr-1" />
-                {deleting ? '刪除中...' : '刪除'}
+                {deleting ? "刪除中..." : "刪除"}
               </Button>
             </div>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">結單次數</p>
+                <p className="text-base text-muted-foreground mb-1">結單次數</p>
                 <Skeleton className="h-7 w-12" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">總消費</p>
+                <p className="text-base text-muted-foreground mb-1">總消費</p>
                 <Skeleton className="h-7 w-20" />
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="font-semibold mb-2">品項</h3>
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-2 border rounded">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 border rounded"
+                  >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-24" />
@@ -185,48 +191,50 @@ export function RestaurantCard({
           <>
             {stats && <RestaurantStats stats={stats} />}
             <div className="mt-4">
-              <h3 className="font-semibold mb-2">品項</h3>
               <div className="space-y-2">
-                {menuItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-2 border rounded"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span>{item.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          NT$ {item.price.toLocaleString()}
-                        </span>
-                      </div>
-                      {stats && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          被點 {stats.items.find((i) => i.id === item.id)?.order_count || 0} 次
-                          {stats.items.find((i) => i.id === item.id)?.average_rating && (
-                            <span className="ml-2">
-                              評分: {stats.items.find((i) => i.id === item.id)?.average_rating} 星
+                {menuItems
+                  .slice()
+                  .sort((a, b) => {
+                    const aStats =
+                      stats?.items.find((i) => i.id === a.id) || null;
+                    const bStats =
+                      stats?.items.find((i) => i.id === b.id) || null;
+                    const aCount = aStats?.order_count || 0;
+                    const bCount = bStats?.order_count || 0;
+                    if (aCount !== bCount) {
+                      return bCount - aCount; // more ordered first
+                    }
+                    // same count (including both 0): sort by price desc
+                    return b.price - a.price;
+                  })
+                  .map((item) => {
+                    const stat =
+                      stats?.items.find((i) => i.id === item.id) || null;
+                    const orderCount = stat?.order_count || 0;
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between py-2 px-4 rounded-xl border"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span>{item.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              NT$ {item.price.toLocaleString()}
                             </span>
-                          )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            被點 {orderCount} 次
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <RatingDialog
-                      menuItemId={item.id}
-                      menuItemName={item.name}
-                      onRatingSubmitted={() => {
-                        // Clear stats cache when rating is submitted
-                        invalidateStatsCache()
-                        refetchStats()
-                      }}
-                    />
-                  </div>
-                ))}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
-

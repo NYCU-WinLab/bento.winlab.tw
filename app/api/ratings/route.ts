@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
   // Upsert rating (update if exists, insert if not)
   const { data: rating, error } = await supabase
-    .from('ratings')
+    .from('bento_ratings')
     .upsert(
       {
         menu_item_id: body.menu_item_id,
