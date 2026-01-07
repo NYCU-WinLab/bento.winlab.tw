@@ -16,8 +16,47 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bento",
+  title: {
+    default: "Bento",
+    template: "Bento",
+  },
   description: "Bento is a platform for ordering meeting food.",
+
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
+
+  openGraph: {
+    type: "website",
+    locale: "zh_TW",
+    url: "https://bento.winlab.tw",
+    siteName: "Bento",
+    title: "Bento - Meeting Food Ordering System",
+    description: "Bento is a platform for ordering meeting food.",
+  },
+
+  twitter: {
+    card: "summary",
+    title: "Bento - Meeting Food Ordering System",
+    description: "Bento is a platform for ordering meeting food.",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  manifest: "/manifest.json",
+  keywords: ["訂餐", "bento", "food ordering"],
 };
 
 export default function RootLayout({
