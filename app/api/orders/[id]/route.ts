@@ -51,7 +51,7 @@ export async function GET(
           }
           // If profile not found, return null user (will show as "未知")
           return {
-            ...item,
+          ...item,
             user: null,
           }
         })

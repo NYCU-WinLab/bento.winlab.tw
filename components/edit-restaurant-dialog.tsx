@@ -50,9 +50,9 @@ export function EditRestaurantDialog({
   const [menuItems, setMenuItems] = useState<MenuParserItem[]>(
     existingMenuItems
       .map((item) => ({
-        name: item.name,
-        price: String(item.price),
-      }))
+      name: item.name,
+      price: String(item.price),
+    }))
       .sort((a, b) => {
         const priceA = parseFloat(a.price) || 0
         const priceB = parseFloat(b.price) || 0

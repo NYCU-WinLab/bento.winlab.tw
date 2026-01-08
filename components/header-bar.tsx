@@ -3,6 +3,14 @@
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { isAdmin } from "@/lib/utils/admin-client";
 import Link from "next/link";
@@ -74,13 +82,14 @@ export default function HeaderBar() {
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (provider: "google" | "keycloak") => {
     await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: `${
           process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
         }/api/auth/callback`,
+        scopes: provider === "keycloak" ? "openid" : undefined,
       },
     });
   };
@@ -152,6 +161,9 @@ export default function HeaderBar() {
             </Link>
             <Link href="/menus" className="font-semibold text-lg">
               店家
+            </Link>
+            <Link href="/top5" className="font-semibold text-lg">
+              排名
             </Link>
           </nav>
 
@@ -271,12 +283,36 @@ export default function HeaderBar() {
                 </Avatar>
               </button>
             ) : (
-              <Button
-                onClick={handleLogin}
-                className="animate-in fade-in duration-200"
-              >
-                登入
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="animate-in fade-in duration-200">
+                    登入
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[360px]">
+                  <DialogHeader>
+                    <DialogTitle>選擇登入方式</DialogTitle>
+                    <DialogDescription>
+                      使用 Google 或 Keycloak 進行登入。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-3">
+                    <Button
+                      onClick={() => handleLogin("google")}
+                      className="justify-center"
+                    >
+                      使用 Google 登入
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleLogin("keycloak")}
+                      className="justify-center"
+                    >
+                      使用 Keycloak 登入
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>

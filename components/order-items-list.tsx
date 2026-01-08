@@ -126,9 +126,9 @@ export function OrderItemsList({
       <TableBody>
         {items.map((item) => (
           <TableRow key={item.id} className="h-11">
-            <TableCell>
+              <TableCell>
               {item.user?.name || item.user?.email || "未知"}
-            </TableCell>
+              </TableCell>
             <TableCell>
               {item.menu_items?.name || "未知"}
               {item.no_sauce && (
@@ -140,16 +140,16 @@ export function OrderItemsList({
                 </Badge>
               )}
               {isActive && currentUserId === item.user_id && (
-                <Button
-                  variant="destructive"
-                  size="sm"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                   className="ml-2 h-7 px-3 py-0 align-middle"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  刪除
-                </Button>
-              )}
-            </TableCell>
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    刪除
+                  </Button>
+                )}
+              </TableCell>
             <TableCell className="text-right">
               NT$ {(item.menu_items?.price || 0).toLocaleString()}
             </TableCell>
