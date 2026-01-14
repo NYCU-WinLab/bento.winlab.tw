@@ -19,6 +19,7 @@ import { Label } from "./ui/label";
 interface MenuItem {
   name: string;
   price: string;
+  type?: string | null;
 }
 
 export function CreateRestaurantDialog({
@@ -107,8 +108,21 @@ export function CreateRestaurantDialog({
               <Label>菜單圖片</Label>
               <MenuImageUpload
                 onParseComplete={(items) => {
-                  // Sort items by price (ascending)
-                  const sortedItems = [...items].sort((a, b) => {
+                  // Convert to MenuItem format with type
+                  const formattedItems = items.map(item => ({
+                    name: item.name,
+                    price: String(item.price),
+                    type: item.type || undefined,
+                  }));
+                  // Sort items by type first, then by price (ascending)
+                  const sortedItems = [...formattedItems].sort((a, b) => {
+                    // Group by type
+                    if (a.type && b.type && a.type !== b.type) {
+                      return a.type.localeCompare(b.type);
+                    }
+                    if (a.type && !b.type) return -1;
+                    if (!a.type && b.type) return 1;
+                    // Then by price
                     const priceA = parseFloat(a.price) || 0;
                     const priceB = parseFloat(b.price) || 0;
                     return priceA - priceB;

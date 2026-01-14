@@ -7,7 +7,8 @@ import { Button } from './ui/button'
 
 interface MenuItem {
   name: string
-  price: string
+  price: string | number
+  type?: string | null
 }
 
 export function MenuImageUpload({

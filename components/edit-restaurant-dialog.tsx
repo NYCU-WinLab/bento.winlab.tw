@@ -1,7 +1,10 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from './ui/button'
+import { Pencil } from "lucide-react";
+import { useState } from "react";
+import { MenuImageUpload } from "./menu-image-upload";
+import { MenuParser } from "./menu-parser";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,29 +13,29 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { MenuImageUpload } from './menu-image-upload'
-import { MenuParser } from './menu-parser'
-import { Pencil } from 'lucide-react'
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 interface MenuItem {
-  id?: string
-  name: string
-  price: string | number
+  id?: string;
+  name: string;
+  price: string | number;
+  type?: string | null;
 }
 
 // MenuParser expects price as string
 type MenuParserItem = {
-  name: string
-  price: string
-}
+  id?: string;
+  name: string;
+  price: string;
+  type?: string | null;
+};
 
 interface Restaurant {
-  id: string
-  name: string
-  phone: string
+  id: string;
+  name: string;
+  phone: string;
 }
 
 export function EditRestaurantDialog({
@@ -40,59 +43,70 @@ export function EditRestaurantDialog({
   menuItems: existingMenuItems,
   onSuccess,
 }: {
-  restaurant: Restaurant
-  menuItems: MenuItem[]
-  onSuccess: () => void
+  restaurant: Restaurant;
+  menuItems: MenuItem[];
+  onSuccess: () => void;
 }) {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState(restaurant.name)
-  const [phone, setPhone] = useState(restaurant.phone)
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(restaurant.name);
+  const [phone, setPhone] = useState(restaurant.phone);
   const [menuItems, setMenuItems] = useState<MenuParserItem[]>(
     existingMenuItems
       .map((item) => ({
-      name: item.name,
-      price: String(item.price),
-    }))
+        id: item.id, // Keep the id for updates
+        name: item.name,
+        price: String(item.price),
+        type: item.type,
+      }))
       .sort((a, b) => {
-        const priceA = parseFloat(a.price) || 0
-        const priceB = parseFloat(b.price) || 0
-        return priceA - priceB
+        // Group by type first
+        if (a.type && b.type && a.type !== b.type) {
+          return a.type.localeCompare(b.type);
+        }
+        if (a.type && !b.type) return -1;
+        if (!a.type && b.type) return 1;
+        // Then by price
+        const priceA = parseFloat(a.price) || 0;
+        const priceB = parseFloat(b.price) || 0;
+        return priceA - priceB;
       })
-  )
-  const [loading, setLoading] = useState(false)
+  );
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name || !phone) return
+    e.preventDefault();
+    if (!name || !phone) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const res = await fetch(`/api/menus/${restaurant.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           phone,
           menu_items: menuItems.map((item) => ({
+            id: item.id, // Include id for updates
             name: item.name,
             price: item.price,
+            type: item.type || null,
           })),
         }),
-      })
+      });
 
       if (!res.ok) {
-        throw new Error('Failed to update restaurant')
+        throw new Error("Failed to update restaurant");
       }
 
-      setOpen(false)
-      onSuccess()
+      setOpen(false);
+      onSuccess();
     } catch (error) {
-      console.error('Error updating restaurant:', error)
-      alert('更新店家失敗')
+      console.error("Error updating restaurant:", error);
+      alert("更新店家失敗");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,7 +116,7 @@ export function EditRestaurantDialog({
           編輯
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl sm:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>編輯店家</DialogTitle>
           <DialogDescription>更新店家資訊與菜單</DialogDescription>
@@ -131,18 +145,26 @@ export function EditRestaurantDialog({
               <Label>重新上傳菜單圖片（選填）</Label>
               <MenuImageUpload
                 onParseComplete={(items) => {
-                  // Sort items by price (ascending)
+                  // Sort items by type first, then price (ascending)
                   const sortedItems = [...items]
                     .map((item) => ({
                       name: item.name,
                       price: String(item.price),
+                      type: item.type,
                     }))
                     .sort((a, b) => {
-                      const priceA = parseFloat(a.price) || 0
-                      const priceB = parseFloat(b.price) || 0
-                      return priceA - priceB
-                    })
-                  setMenuItems(sortedItems)
+                      // Group by type first
+                      if (a.type && b.type && a.type !== b.type) {
+                        return a.type.localeCompare(b.type);
+                      }
+                      if (a.type && !b.type) return -1;
+                      if (!a.type && b.type) return 1;
+                      // Then by price
+                      const priceA = parseFloat(a.price) || 0;
+                      const priceB = parseFloat(b.price) || 0;
+                      return priceA - priceB;
+                    });
+                  setMenuItems(sortedItems);
                 }}
               />
             </div>
@@ -152,16 +174,19 @@ export function EditRestaurantDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               取消
             </Button>
             <Button type="submit" disabled={loading || !name || !phone}>
-              {loading ? '更新中...' : '更新'}
+              {loading ? "更新中..." : "更新"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

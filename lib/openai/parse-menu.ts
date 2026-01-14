@@ -7,6 +7,7 @@ const openai = new OpenAI({
 export interface MenuItem {
   name: string;
   price: number;
+  type?: string | null;
 }
 
 export async function parseMenuImage(imageFile: File): Promise<MenuItem[]> {
@@ -29,19 +30,22 @@ export async function parseMenuImage(imageFile: File): Promise<MenuItem[]> {
           content: [
             {
               type: "text",
-              text: `Analyze this menu image and extract all menu items with their prices.
+              text: `Analyze this menu image and extract all menu items with their prices and categories.
 
 Return a JSON object with this exact structure:
 {
   "menu_items": [
-    { "name": "Menu Item Name", "price": "Price as string" },
+    { "name": "Menu Item Name", "price": 100, "type": "Category" },
     ...
   ]
 }
 
 Requirements:
 - Extract ALL menu items visible in the image
-- Prices must be strings (e.g., "100", "150", "NT$200")
+- Prices must be numbers (e.g., 100, 150, 200)
+- Try to identify the category/type for each item (e.g., "水餃", "鍋貼", "湯品", "雞肉", "豬肉", "魚類", "麵類", "小菜", "飲料", etc.)
+- If you cannot determine the category from the image, you can leave the "type" field out or set it to null
+- Common categories: 水餃, 鍋貼, 湯品, 雞肉, 豬肉, 牛肉, 魚類, 麵類, 小菜, 飲料, 便當, 飯類, 粥類, 其他
 - Return only valid JSON, no additional text or markdown formatting`,
             },
             {
@@ -74,6 +78,11 @@ Requirements:
                       type: "number",
                       description:
                         "Price of the menu item as a number (e.g. 100, 200)",
+                    },
+                    type: {
+                      type: "string",
+                      description:
+                        "Category/type of the menu item (e.g. 水餃, 湯品, 雞肉, 豬肉, 麵類, 小菜, 飲料, etc.)",
                     },
                   },
                   required: ["name", "price"],
@@ -108,6 +117,8 @@ Requirements:
       // Ensure price is a number; convert or default to 0
       price:
         typeof item.price === "number" ? item.price : Number(item.price) || 0,
+      // Include type if available
+      type: item.type ? String(item.type).trim() : undefined,
     }));
   } catch (error) {
     console.error("Error parsing menu image:", error);

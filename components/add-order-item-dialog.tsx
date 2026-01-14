@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import {
@@ -26,6 +26,7 @@ interface MenuItem {
   id: string;
   name: string;
   price: number;
+  type?: string | null;
   order_count?: number; // Number of times this item has been ordered in this order
 }
 
@@ -109,14 +110,20 @@ export function AddOrderItemDialog({
           order_count: itemCountMap.get(item.id) || 0,
         }));
 
-        // Sort by order count (descending), then by price (ascending - cheap first) for all items
+        // Sort by order count (descending), then by type, then by price (descending - expensive first)
         menuItemsWithCount.sort((a: MenuItem, b: MenuItem) => {
           const countA = a.order_count || 0;
           const countB = b.order_count || 0;
           if (countA !== countB) {
             return countB - countA; // Higher count first
           }
-          // If same count (including both 0), sort by price ascending (cheap first)
+          // If same count, group by type
+          if (a.type && b.type && a.type !== b.type) {
+            return a.type.localeCompare(b.type);
+          }
+          if (a.type && !b.type) return -1;
+          if (!a.type && b.type) return 1;
+          // If same count and type, sort by price descending (expensive first)
           return b.price - a.price; // Higher price first
         });
 
@@ -221,31 +228,66 @@ export function AddOrderItemDialog({
       <DialogTrigger asChild>
         {trigger || <Button>新增訂餐</Button>}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>新增訂餐</DialogTitle>
-          <DialogDescription>選擇品項並確認選項</DialogDescription>
+          <DialogTitle className="text-2xl">新增訂餐</DialogTitle>
+          <DialogDescription className="text-base">
+            選擇品項並確認選項
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="flex items-center gap-4 pb-4">
             <div className="flex-1">
               <Select value={selectedItem} onValueChange={setSelectedItem}>
-                <SelectTrigger id="menuItem" className="w-full">
+                <SelectTrigger id="menuItem" className="w-full text-base h-12">
                   <SelectValue placeholder="選擇品項" />
                 </SelectTrigger>
                 <SelectContent>
-                  {menuItems.map((item) => {
-                    const orderCountText =
-                      item.order_count && item.order_count > 0
-                        ? `（${item.order_count} 個訂餐）`
-                        : "";
-                    return (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name} - NT$ {item.price.toLocaleString()}{" "}
-                        {orderCountText}
-                      </SelectItem>
-                    );
-                  })}
+                  {(() => {
+                    // Group items by type
+                    const grouped = new Map<string, MenuItem[]>();
+                    menuItems.forEach((item) => {
+                      const type = item.type || "其他";
+                      if (!grouped.has(type)) {
+                        grouped.set(type, []);
+                      }
+                      grouped.get(type)!.push(item);
+                    });
+
+                    // Render grouped items
+                    const result: React.ReactElement[] = [];
+                    grouped.forEach((items, type) => {
+                      // Add type header
+                      if (grouped.size > 1) {
+                        result.push(
+                          <div
+                            key={`header-${type}`}
+                            className="px-3 py-2 text-base font-semibold text-foreground bg-muted/50 sticky top-0 backdrop-blur-sm"
+                          >
+                            {type}
+                          </div>
+                        );
+                      }
+                      // Add items in this group
+                      items.forEach((item) => {
+                        const orderCountText =
+                          item.order_count && item.order_count > 0
+                            ? `（${item.order_count} 個訂餐）`
+                            : "";
+                        result.push(
+                          <SelectItem
+                            key={item.id}
+                            value={item.id}
+                            className="text-base py-3"
+                          >
+                            {item.name} - NT$ {item.price.toLocaleString()}{" "}
+                            {orderCountText}
+                          </SelectItem>
+                        );
+                      });
+                    });
+                    return result;
+                  })()}
                 </SelectContent>
               </Select>
             </div>
@@ -257,7 +299,7 @@ export function AddOrderItemDialog({
               />
               <Label
                 htmlFor="noSauce"
-                className="cursor-pointer whitespace-nowrap"
+                className="cursor-pointer whitespace-nowrap text-base"
               >
                 不醬
               </Label>
@@ -268,10 +310,15 @@ export function AddOrderItemDialog({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="text-base h-11"
             >
               取消
             </Button>
-            <Button type="submit" disabled={loading || !selectedItem}>
+            <Button
+              type="submit"
+              disabled={loading || !selectedItem}
+              className="text-base h-11"
+            >
               {loading ? "新增中..." : "新增"}
             </Button>
           </DialogFooter>

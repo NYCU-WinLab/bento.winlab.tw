@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Trash2 } from 'lucide-react'
 
 interface MenuItem {
+  id?: string
   name: string
   price: string
+  type?: string | null
 }
 
 export function MenuParser({
@@ -25,15 +27,16 @@ export function MenuParser({
     setLocalItems(items)
   }, [items])
 
-  const handleItemChange = (index: number, field: 'name' | 'price', value: string) => {
+  const handleItemChange = (index: number, field: 'name' | 'price' | 'type', value: string) => {
     const newItems = [...localItems]
+    // Preserve the id when updating fields
     newItems[index] = { ...newItems[index], [field]: value }
     setLocalItems(newItems)
     onChange(newItems)
   }
 
   const handleAddItem = () => {
-    const newItems = [...localItems, { name: '', price: '' }]
+    const newItems = [...localItems, { name: '', price: '', type: '' }]
     setLocalItems(newItems)
     onChange(newItems)
   }
@@ -50,18 +53,26 @@ export function MenuParser({
         <TableHeader>
           <TableRow>
             <TableHead>品項名稱</TableHead>
+            <TableHead>分類</TableHead>
             <TableHead>價格</TableHead>
             <TableHead>操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {localItems.map((item, index) => (
-            <TableRow key={index}>
+            <TableRow key={item.id || index}>
               <TableCell>
                 <Input
                   value={item.name}
                   onChange={(e) => handleItemChange(index, 'name', e.target.value)}
                   placeholder="品項名稱"
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  value={item.type || ''}
+                  onChange={(e) => handleItemChange(index, 'type', e.target.value)}
+                  placeholder="分類（選填）"
                 />
               </TableCell>
               <TableCell>

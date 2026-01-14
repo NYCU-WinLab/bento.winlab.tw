@@ -13,6 +13,7 @@ interface MenuItem {
   id: string;
   name: string;
   price: number;
+  type?: string | null;
   order_count?: number;
   average_rating?: number;
 }

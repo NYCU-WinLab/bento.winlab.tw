@@ -58,16 +58,17 @@ export async function POST(request: Request) {
     ) {
       const menuItems = body.menu_items
         .filter(
-          (item: { name: string; price: string | number }) =>
+          (item: { name: string; price: string | number; type?: string }) =>
             item.name && item.price
         )
-        .map((item: { name: string; price: string | number }) => ({
+        .map((item: { name: string; price: string | number; type?: string }) => ({
           restaurant_id: menu.id,
           name: item.name.trim(),
           price:
             typeof item.price === "number"
               ? item.price
               : parseFloat(String(item.price)) || 0,
+          type: item.type && item.type.trim() ? item.type.trim() : null,
         }));
 
       if (menuItems.length > 0) {

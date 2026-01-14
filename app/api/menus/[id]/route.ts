@@ -57,23 +57,94 @@ export async function PUT(
 
     // Update menu items if provided
     if (body.menu_items && Array.isArray(body.menu_items)) {
-      // Delete existing menu items
-      await supabase.from('bento_menu_items').delete().eq('restaurant_id', id)
+      // Get existing menu items
+      const { data: existingItems } = await supabase
+        .from('bento_menu_items')
+        .select('id')
+        .eq('restaurant_id', id)
 
-      // Insert new menu items
-      if (body.menu_items.length > 0) {
-        const menuItems = body.menu_items.map((item: { name: string; price: string | number }) => ({
-          restaurant_id: id,
-          name: item.name,
-          price: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)) || 0,
-        }))
+      const existingIds = new Set((existingItems || []).map(item => item.id))
+      const itemsToUpdate: Array<{ id: string; name: string; price: number; type: string | null }> = []
+      const itemsToInsert: Array<{ restaurant_id: string; name: string; price: number; type: string | null }> = []
+      const providedIds = new Set<string>()
 
-        const { error: menuError } = await supabase
+      // Separate items to update vs insert
+      body.menu_items.forEach((item: { id?: string; name: string; price: string | number; type?: string }) => {
+        const parsedPrice = typeof item.price === 'number' ? item.price : parseFloat(String(item.price)) || 0
+        const parsedType = item.type && String(item.type).trim() ? String(item.type).trim() : null
+
+        if (item.id && existingIds.has(item.id)) {
+          // Update existing item
+          providedIds.add(item.id)
+          itemsToUpdate.push({
+            id: item.id,
+            name: item.name,
+            price: parsedPrice,
+            type: parsedType,
+          })
+        } else {
+          // Insert new item
+          itemsToInsert.push({
+            restaurant_id: id,
+            name: item.name,
+            price: parsedPrice,
+            type: parsedType,
+          })
+        }
+      })
+
+      // Update existing items
+      for (const item of itemsToUpdate) {
+        const { error: updateError } = await supabase
           .from('bento_menu_items')
-          .insert(menuItems)
+          .update({
+            name: item.name,
+            price: item.price,
+            type: item.type,
+          })
+          .eq('id', item.id)
 
-        if (menuError) {
-          return NextResponse.json({ error: menuError.message }, { status: 500 })
+        if (updateError) {
+          console.error('Error updating menu item:', updateError)
+          return NextResponse.json({ error: `更新品項失敗: ${updateError.message}` }, { status: 500 })
+        }
+      }
+
+      // Insert new items
+      if (itemsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('bento_menu_items')
+          .insert(itemsToInsert)
+
+        if (insertError) {
+          console.error('Error inserting menu items:', insertError)
+          return NextResponse.json({ error: `新增品項失敗: ${insertError.message}` }, { status: 500 })
+        }
+      }
+
+      // Delete items that are no longer in the list (only if they don't have order_items)
+      const idsToDelete = Array.from(existingIds).filter(id => !providedIds.has(id))
+      if (idsToDelete.length > 0) {
+        // Check if any of these items have been ordered
+        const { data: orderedItems } = await supabase
+          .from('bento_order_items')
+          .select('menu_item_id')
+          .in('menu_item_id', idsToDelete)
+
+        const orderedIds = new Set((orderedItems || []).map(item => item.menu_item_id))
+        const safeToDelete = idsToDelete.filter(id => !orderedIds.has(id))
+
+        // Only delete items that have never been ordered
+        if (safeToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('bento_menu_items')
+            .delete()
+            .in('id', safeToDelete)
+
+          if (deleteError) {
+            console.error('Error deleting menu items:', deleteError)
+            // Don't return error, just log it
+          }
         }
       }
     }
