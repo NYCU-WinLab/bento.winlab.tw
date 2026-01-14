@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,7 +20,7 @@ type Identity = {
 };
 
 export function UserProfile() {
-  const { user, loading } = useSupabase();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const supabase = createClient();
   const [identities, setIdentities] = useState<Identity[]>([]);

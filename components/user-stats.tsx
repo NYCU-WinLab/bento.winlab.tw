@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import { UserOrderCount } from "./user-order-count";
 import { UserTopItems } from "./user-top-items";
@@ -16,7 +16,7 @@ interface UserStatsData {
 }
 
 export function UserStats() {
-  const { user } = useSupabase();
+  const { user } = useAuth();
 
   const { data: stats, loading } = useCachedFetch<UserStatsData>({
     cacheKey: `user_stats_${user?.id || "anonymous"}`,

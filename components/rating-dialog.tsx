@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from './ui/dialog'
 import { Star } from 'lucide-react'
-import { useSupabase } from '@/components/providers/supabase-provider'
+import { useAuth } from '@/contexts/auth-context'
 
 export function RatingDialog({
   menuItemId,
@@ -27,7 +27,7 @@ export function RatingDialog({
   const [rating, setRating] = useState(0)
   const [userRating, setUserRating] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const { user } = useSupabase()
+  const { user } = useAuth()
 
   useEffect(() => {
     if (open && user) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
@@ -56,7 +56,7 @@ export function CreateOrderDialog({
     return today.toISOString().split("T")[0];
   });
   const [loading, setLoading] = useState(false);
-  const { user } = useSupabase();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (open) {

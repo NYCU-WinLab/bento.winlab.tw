@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -13,7 +13,7 @@ import { CreateOrderDialog } from "./create-order-dialog";
 import { CreateRestaurantDialog } from "./create-restaurant-dialog";
 
 export default function HeaderBar() {
-  const { user, loading } = useSupabase();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();

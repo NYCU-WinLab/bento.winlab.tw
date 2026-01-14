@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -75,7 +75,7 @@ export function AddOrderItemDialog({
   const [noSauce, setNoSauce] = useState(false);
   const [loading, setLoading] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
-  const { user } = useSupabase();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (open) {

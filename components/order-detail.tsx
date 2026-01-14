@@ -1,6 +1,6 @@
 "use client";
 
-import { useSupabase } from "@/components/providers/supabase-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import { isAdmin } from "@/lib/utils/admin-client";
 import { useRouter } from "next/navigation";
@@ -41,7 +41,7 @@ interface Order {
 export function OrderDetail({ orderId }: { orderId: string }) {
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
-  const { user } = useSupabase();
+  const { user } = useAuth();
   const router = useRouter();
 
   const {
