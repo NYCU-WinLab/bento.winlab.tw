@@ -46,8 +46,8 @@ export default function RankPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
-      <h1 className="text-xl font-bold mb-6 mx-2">排名</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <h1 className="text-2xl font-bold mx-2">排名</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <TopSpenders data={data?.topSpenders || []} loading={loading} />
         <TopVariety data={data?.topVariety || []} loading={loading} />
         <TopParticipants data={data?.topParticipants || []} loading={loading} />

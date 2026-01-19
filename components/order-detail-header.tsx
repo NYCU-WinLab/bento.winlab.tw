@@ -43,11 +43,11 @@ export function OrderDetailHeader({ order }: { order: Order }) {
   const orderItems = order.order_items || [];
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-4">
               {order.restaurants.name}
             </h1>
             <Badge variant="default" className="text-sm">

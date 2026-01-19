@@ -65,7 +65,7 @@ export function OrderStats({ orderItems, className }: OrderStatsProps) {
   return (
     <div
       className={cn(
-        "text-base text-muted-foreground space-y-2",
+        "text-base text-muted-foreground space-y-4",
         className
       )}
     >

@@ -96,8 +96,8 @@ export function OrderList() {
   return (
     <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
       {activeOrders.length > 0 && (
-        <div className="mb-8">
-          <h1 className="text-xl font-bold mb-6 mx-2">進行中</h1>
+        <div>
+          <h1 className="text-2xl font-bold mb-4 mx-2">進行中</h1>
           <div className="space-y-4">
             {activeOrders.map((order) => (
               <OrderCard key={order.id} order={order} />
@@ -108,7 +108,7 @@ export function OrderList() {
 
       {closedOrders.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-6 mx-2">已結束</h2>
+          <h2 className="text-2xl font-semibold mb-4 mx-2">已結束</h2>
           <div className="space-y-4">
             {closedOrders.map((order) => (
               <OrderCard key={order.id} order={order} />

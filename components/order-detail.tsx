@@ -168,7 +168,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   return (
     <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
       <OrderDetailHeader order={order} />
-      <div className="mt-6">
+      <div>
         <h2 className="text-2xl font-semibold mb-4">訂單項目</h2>
         <OrderItemsList
           items={order.order_items}

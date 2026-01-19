@@ -35,9 +35,11 @@ export function UserStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <UserOrderCount value={stats?.order_count || 0} loading={loading} />
-      <UserTotalSpending value={stats?.total_spending || 0} loading={loading} />
+    <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <UserOrderCount value={stats?.order_count || 0} loading={loading} />
+        <UserTotalSpending value={stats?.total_spending || 0} loading={loading} />
+      </div>
       <UserTopItems
         data={stats?.top_restaurant_items || []}
         loading={loading}

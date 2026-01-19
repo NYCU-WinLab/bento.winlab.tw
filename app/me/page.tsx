@@ -3,9 +3,9 @@ import { UserStats } from '@/components/user-stats'
 
 export default function MePage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto p-4 max-w-5xl">
       <UserProfile />
-      <div className="mt-8">
+      <div className="mt-4">
         <UserStats />
       </div>
     </div>

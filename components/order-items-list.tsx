@@ -3,13 +3,13 @@
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemSeparator,
+  ItemTitle,
+} from "./ui/item";
 
 interface OrderItem {
   id: string;
@@ -38,6 +38,13 @@ interface Order {
     phone: string;
   };
   order_items: OrderItem[];
+}
+
+interface GroupedOrderItem {
+  user_id: string;
+  user_name: string | null;
+  items: OrderItem[];
+  total: number;
 }
 
 export function OrderItemsList({
@@ -110,6 +117,24 @@ export function OrderItemsList({
     }
   };
 
+  // Group items by user
+  const groupedItems = items.reduce((acc, item) => {
+    const userId = item.user_id;
+    if (!acc[userId]) {
+      acc[userId] = {
+        user_id: userId,
+        user_name: item.user?.name || null,
+        items: [],
+        total: 0,
+      };
+    }
+    acc[userId].items.push(item);
+    acc[userId].total += item.menu_items?.price || 0;
+    return acc;
+  }, {} as Record<string, GroupedOrderItem>);
+
+  const groupedItemsArray = Object.values(groupedItems);
+
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">尚無訂餐項目</div>
@@ -117,45 +142,55 @@ export function OrderItemsList({
   }
 
   return (
-    <Table className="text-base">
-      <TableHeader>
-        <TableRow>
-          <TableHead>姓名</TableHead>
-          <TableHead>品項</TableHead>
-          <TableHead className="text-right">金額</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item) => (
-          <TableRow key={item.id} className="h-11">
-            <TableCell>{item.user?.name ? item.user.name : "未知"}</TableCell>
-            <TableCell>
-              {item.menu_items?.name}
-              {item.no_sauce && (
-                <Badge
-                  variant="secondary"
-                  className="ml-2 text-[11px] px-2 py-0.5"
-                >
-                  不醬
-                </Badge>
-              )}
-              {isActive && currentUserId === item.user_id && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-2 h-7 px-3 py-0 align-middle"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  刪除
-                </Button>
-              )}
-            </TableCell>
-            <TableCell className="text-right">
-              NT$ {(item.menu_items?.price).toLocaleString()}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ItemGroup className="gap-4">
+      {groupedItemsArray.map((group, index) => (
+        <div key={group.user_id}>
+          <Item variant="outline" className="text-lg">
+            <ItemContent className="flex-1">
+              <ItemTitle className="text-lg">
+                {group.user_name || "未知"}
+              </ItemTitle>
+              <div className="flex flex-col gap-1.5 mt-1.5 text-muted-foreground">
+                {group.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 flex-wrap"
+                  >
+                    <span>{item.menu_items?.name}</span>
+                    {item.no_sauce && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[11px] px-2 py-0.5"
+                      >
+                        不醬
+                      </Badge>
+                    )}
+                    {isActive && currentUserId === item.user_id && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-7 px-3 py-0"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        刪除
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ItemContent>
+            <ItemActions>
+              <div className="text-right font-medium">
+                <div className="text-lg text-muted-foreground">總計</div>
+                <div className="text-lg">
+                  NT$ {group.total.toLocaleString()}
+                </div>
+              </div>
+            </ItemActions>
+          </Item>
+          {index < groupedItemsArray.length - 1 && <ItemSeparator />}
+        </div>
+      ))}
+    </ItemGroup>
   );
 }
