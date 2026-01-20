@@ -7,8 +7,7 @@ import {
   ItemActions,
   ItemContent,
   ItemGroup,
-  ItemSeparator,
-  ItemTitle,
+  ItemTitle
 } from "./ui/item";
 
 interface OrderItem {
@@ -156,68 +155,80 @@ export function OrderItemsList({
 
   return (
     <ItemGroup className="gap-4">
-      {groupedItemsArray.map((group, index) => (
-        <div key={group.user_id}>
-          <Item variant="outline" className="text-lg">
-            <ItemContent className="flex-1">
-              <ItemTitle className="text-lg">
-                {group.user_name || "未知"}
-              </ItemTitle>
-              <div className="flex flex-col gap-1.5 mt-1.5 text-muted-foreground">
-                {group.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-2 flex-wrap"
-                  >
-                    <span>{item.menu_items?.name}</span>
-                    {item.no_sauce && (
-                      <Badge
-                        variant="secondary"
-                        className="text-[11px] px-2 py-0.5"
-                      >
-                        不醬
-                      </Badge>
-                    )}
-                    {item.additional !== null &&
-                      item.additional !== undefined &&
-                      restaurantAdditional &&
-                      restaurantAdditional[item.additional] && (
+      {groupedItemsArray.map((group, index) => {
+        const isOver140 = group.total > 140;
+        const goldGlowStyle = isOver140
+          ? "shadow-[0_0_20px_rgba(250,204,21,0.6)] border-yellow-500/50"
+          : "";
+
+        return (
+          <div key={group.user_id}>
+            <Item
+              variant="outline"
+              className={`text-lg ${goldGlowStyle} ${isOver140 ? "bg-linear-to-br from-yellow-50/50 to-yellow-100/30 dark:from-yellow-950/20 dark:to-yellow-900/10" : ""
+                }`}
+            >
+              <ItemContent className="flex-1">
+                <ItemTitle className="text-lg">
+                  {group.user_name || "未知"}
+                </ItemTitle>
+                <div className="flex flex-col gap-1.5 mt-1.5 text-muted-foreground">
+                  {group.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2 flex-wrap"
+                    >
+                      <span>{item.menu_items?.name}</span>
+                      {item.no_sauce && (
                         <Badge
                           variant="secondary"
                           className="text-[11px] px-2 py-0.5"
                         >
-                          {restaurantAdditional[item.additional]}
+                          不醬
                         </Badge>
                       )}
-                    {isActive && currentUserId === item.user_id && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="h-7 px-3 py-0"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        刪除
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ItemContent>
-            <ItemActions>
-              <div className="text-right font-medium">
-                <div className="text-lg text-muted-foreground">總計</div>
-                <div
-                  className={`text-lg ${group.total > 140 ? "text-destructive" : ""
-                    }`}
-                >
-                  NT$ {group.total.toLocaleString()}
+                      {item.additional !== null &&
+                        item.additional !== undefined &&
+                        restaurantAdditional &&
+                        restaurantAdditional[item.additional] && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[11px] px-2 py-0.5"
+                          >
+                            {restaurantAdditional[item.additional]}
+                          </Badge>
+                        )}
+                      {isActive && currentUserId === item.user_id && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-7 px-3 py-0"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          刪除
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </ItemActions>
-          </Item>
-          {index < groupedItemsArray.length - 1 && <ItemSeparator />}
-        </div>
-      ))}
+              </ItemContent>
+              <ItemActions>
+                <div className="text-right font-medium">
+                  <div className="text-lg text-muted-foreground">總計</div>
+                  <div
+                    className={`text-lg ${isOver140
+                      ? "text-yellow-600 dark:text-yellow-500 font-bold"
+                      : ""
+                      }`}
+                  >
+                    NT$ {group.total.toLocaleString()}
+                  </div>
+                </div>
+              </ItemActions>
+            </Item>
+          </div>
+        );
+      })}
     </ItemGroup>
   );
 }
