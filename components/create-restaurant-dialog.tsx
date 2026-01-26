@@ -84,7 +84,7 @@ export function CreateRestaurantDialog({
       <DialogTrigger asChild>
         {trigger || <Button>新增店家</Button>}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>新增店家</DialogTitle>
           <DialogDescription>填寫店家資訊並上傳菜單圖片</DialogDescription>
