@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { isAdmin } from "@/lib/utils/admin-client";
+import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -146,7 +147,7 @@ export default function HeaderBar() {
   return (
     <header className="flex items-center justify-between p-4 px-6 w-full max-w-5xl mx-auto">
       {/* Left side - Navigation links */}
-      <nav className="flex items-center gap-6">
+      <nav className="flex items-center gap-4">
         <Link href="/" className="font-semibold text-lg">
           訂單
         </Link>
@@ -225,6 +226,12 @@ export default function HeaderBar() {
           </>
         )}
 
+        <Button size="icon" variant="ghost">
+          <Link href="https://github.com/NYCU-WinLab/bento.winlab.tw/issues/new/choose">
+            <CircleDot className="size-4" />
+          </Link>
+        </Button>
+
         {/* Add order item button (on order detail page, for all logged-in users) */}
         {orderId && orderStatus === "active" && user && (
           <AddOrderItemDialog
@@ -281,30 +288,6 @@ export default function HeaderBar() {
           >
             登入
           </Button>
-          // <Dialog>
-          //   <DialogTrigger asChild>
-          //     <Button size="sm" className="animate-in fade-in duration-200">
-          //       登入
-          //     </Button>
-          //   </DialogTrigger>
-          //   <DialogContent className="sm:max-w-[360px]">
-          //     <DialogHeader>
-          //       <DialogTitle>選擇登入方式</DialogTitle>
-          //       <DialogDescription>
-          //         使用 Keycloak 進行登入。
-          //       </DialogDescription>
-          //     </DialogHeader>
-          //     <div className="grid gap-3">
-          //       <Button
-          //         variant="outline"
-          //         onClick={() => handleLogin("keycloak")}
-          //         className="justify-center"
-          //       >
-          //         使用 Keycloak 登入
-          //       </Button>
-          //     </div>
-          //   </DialogContent>
-          // </Dialog>
         )}
       </div>
     </header>
