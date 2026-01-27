@@ -1,0 +1,43 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible to help us understand your request.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What pain point are you experiencing?
+      placeholder: "Example: Currently, users have to perform a time-consuming manual process that is error-prone."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see. How should it work?
+      placeholder: "Example: Add an automated feature that handles this process and provides real-time feedback."
+    validations:
+      required: true
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Provide specific scenarios where this feature would be helpful
+      placeholder: |
+        1. When a user needs to [specific scenario]
+        2. When [another role] needs to [specific action]
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any mockups, screenshots, links to similar features, or other context
+      placeholder: Add screenshots, links, or any other relevant information here
+    validations:
+      required: false
