@@ -32,6 +32,7 @@ export function CreateRestaurantDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [googleMapLink, setGoogleMapLink] = useState("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [additionalOptions, setAdditionalOptions] = useState<string[]>([]);
   const [newAdditionalOption, setNewAdditionalOption] = useState("");
@@ -49,6 +50,7 @@ export function CreateRestaurantDialog({
         body: JSON.stringify({
           name,
           phone,
+          google_map_link: googleMapLink.trim() || null,
           menu_items: menuItems,
           additional: additionalOptions.length > 0 ? additionalOptions : null,
         }),
@@ -67,6 +69,7 @@ export function CreateRestaurantDialog({
       setOpen(false);
       setName("");
       setPhone("");
+      setGoogleMapLink("");
       setMenuItems([]);
       setAdditionalOptions([]);
       setNewAdditionalOption("");
@@ -98,6 +101,16 @@ export function CreateRestaurantDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="google_map_link">Google 地圖連結（選填）</Label>
+              <Input
+                id="google_map_link"
+                type="url"
+                placeholder="https://maps.google.com/..."
+                value={googleMapLink}
+                onChange={(e) => setGoogleMapLink(e.target.value)}
               />
             </div>
             <div className="space-y-2">

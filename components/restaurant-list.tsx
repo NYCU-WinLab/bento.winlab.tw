@@ -10,6 +10,7 @@ interface Restaurant {
   id: string;
   name: string;
   phone: string;
+  google_map_link?: string | null;
   created_at: string;
 }
 

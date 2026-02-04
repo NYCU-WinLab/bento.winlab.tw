@@ -1,7 +1,7 @@
 "use client";
 
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { Trash2 } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditRestaurantDialog } from "./edit-restaurant-dialog";
 import { RestaurantStats } from "./restaurant-stats";
@@ -22,6 +22,7 @@ interface Restaurant {
   id: string;
   name: string;
   phone: string;
+  google_map_link?: string | null;
   created_at: string;
   additional?: string[] | null;
 }
@@ -135,6 +136,28 @@ export function RestaurantCard({
             <CardTitle className="text-xl font-bold">
               {restaurant.name}
             </CardTitle>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+              {restaurant.google_map_link && (
+                <a
+                  href={restaurant.google_map_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Google 地圖
+                </a>
+              )}
+              <span>
+                電話：
+                <a
+                  href={`tel:${restaurant.phone}`}
+                  className="text-primary hover:underline"
+                >
+                  {restaurant.phone}
+                </a>
+              </span>
+            </div>
           </div>
           {isAdmin && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
