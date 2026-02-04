@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     if (!body.name || !body.phone) {
       return NextResponse.json(
         { error: "店家名稱和電話為必填項目" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       .insert({
         name: body.name,
         phone: body.phone,
+        google_map_link: body.google_map_link?.trim() || null,
         additional: body.additional || null,
       })
       .select()
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       console.error("Error creating menu:", error);
       return NextResponse.json(
         { error: `建立店家失敗: ${error.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -60,17 +61,19 @@ export async function POST(request: Request) {
       const menuItems = body.menu_items
         .filter(
           (item: { name: string; price: string | number; type?: string }) =>
-            item.name && item.price
+            item.name && item.price,
         )
-        .map((item: { name: string; price: string | number; type?: string }) => ({
-          restaurant_id: menu.id,
-          name: item.name.trim(),
-          price:
-            typeof item.price === "number"
-              ? item.price
-              : parseFloat(String(item.price)) || 0,
-          type: item.type && item.type.trim() ? item.type.trim() : null,
-        }));
+        .map(
+          (item: { name: string; price: string | number; type?: string }) => ({
+            restaurant_id: menu.id,
+            name: item.name.trim(),
+            price:
+              typeof item.price === "number"
+                ? item.price
+                : parseFloat(String(item.price)) || 0,
+            type: item.type && item.type.trim() ? item.type.trim() : null,
+          }),
+        );
 
       if (menuItems.length > 0) {
         const { error: menuError } = await supabase
@@ -85,7 +88,7 @@ export async function POST(request: Request) {
               menu,
               warning: `店家已建立，但部分品項建立失敗: ${menuError.message}`,
             },
-            { status: 201 }
+            { status: 201 },
           );
         }
       }
@@ -106,7 +109,7 @@ export async function POST(request: Request) {
           error instanceof Error && error.message.includes("Forbidden")
             ? 403
             : 500,
-      }
+      },
     );
   }
 }

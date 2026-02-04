@@ -34,6 +34,7 @@ interface Order {
     id: string;
     name: string;
     phone: string;
+    google_map_link?: string | null;
     additional: string[] | null;
   };
   order_items: OrderItem[];

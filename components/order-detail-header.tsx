@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import { OrderStats } from "./order-stats";
 import { Badge } from "./ui/badge";
 
@@ -24,6 +25,7 @@ interface Order {
     id: string;
     name: string;
     phone: string;
+    google_map_link?: string | null;
     additional?: string[] | null;
   };
   order_items?: OrderItem[];
@@ -56,15 +58,28 @@ export function OrderDetailHeader({ order }: { order: Order }) {
               {orderDate}
             </Badge>
           </div>
-          <p className="text-muted-foreground">
-            電話：
-            <a
-              href={`tel:${order.restaurants.phone}`}
-              className="text-primary hover:underline"
-            >
-              {order.restaurants.phone}
-            </a>
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
+            {order.restaurants.google_map_link && (
+              <a
+                href={order.restaurants.google_map_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Google 地圖
+              </a>
+            )}
+            <p>
+              電話：
+              <a
+                href={`tel:${order.restaurants.phone}`}
+                className="text-primary hover:underline"
+              >
+                {order.restaurants.phone}
+              </a>
+            </p>
+          </div>
         </div>
       </div>
       <OrderStats
