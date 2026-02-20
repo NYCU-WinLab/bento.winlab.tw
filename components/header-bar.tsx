@@ -283,10 +283,18 @@ export default function HeaderBar() {
         ) : (
           <Button
             size="sm"
-            onClick={() => handleLogin("keycloak")}
+            asChild
             className="animate-in fade-in duration-200"
           >
-            登入
+            <Link
+              href={
+                pathname && pathname !== "/login"
+                  ? `/login?next=${encodeURIComponent(pathname)}`
+                  : "/login"
+              }
+            >
+              登入
+            </Link>
           </Button>
         )}
       </div>
