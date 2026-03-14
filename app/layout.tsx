@@ -2,6 +2,7 @@ import "@/app/globals.css";
 import { Footer } from "@/components/footer";
 import HeaderBar from "@/components/header-bar";
 import { Separator } from "@/components/ui/separator";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/auth-context";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
@@ -41,6 +42,7 @@ export default function RootLayout({
               <Footer />
             </div>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

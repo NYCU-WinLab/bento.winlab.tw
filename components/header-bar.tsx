@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminCheck } from "@/lib/hooks/use-admin-check";
@@ -10,6 +11,7 @@ import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { AddOrderItemDialog } from "./add-order-item-dialog";
 import { CreateOrderDialog } from "./create-order-dialog";
 import { CreateRestaurantDialog } from "./create-restaurant-dialog";
@@ -26,11 +28,9 @@ export default function HeaderBar() {
   );
 
   useEffect(() => {
-    // Extract order ID from pathname if on order detail page
     if (pathname?.startsWith("/orders/")) {
       const id = pathname.split("/orders/")[1];
       setOrderId(id || null);
-      // Fetch order status
       if (id) {
         fetchOrderStatus(id);
       }
@@ -52,18 +52,6 @@ export default function HeaderBar() {
     }
   };
 
-  const handleLogin = async (provider: "google" | "keycloak") => {
-    const redirectTo = `${window.location.origin}/api/auth/callback`;
-
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo,
-        scopes: provider === "keycloak" ? "openid" : undefined,
-      },
-    });
-  };
-
   const handleAvatarClick = () => {
     router.push("/me");
   };
@@ -78,22 +66,20 @@ export default function HeaderBar() {
         setOrderStatus("closed");
         clearCache("orders");
         clearCache(`order_${orderId}`);
+        toast.success("訂單已關閉");
         router.refresh();
       } else {
         const data = await res.json();
-        alert(data.error || "關閉訂單失敗");
+        toast.error(data.error || "關閉訂單失敗");
       }
     } catch (error) {
       console.error("Error closing order:", error);
-      alert("關閉訂單失敗");
+      toast.error("關閉訂單失敗");
     }
   };
 
   const handleDeleteOrder = async () => {
     if (!orderId) return;
-    if (!confirm(`確定要刪除訂單嗎？\n\n此操作將永久刪除訂單，且無法復原。`)) {
-      return;
-    }
 
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
@@ -109,10 +95,11 @@ export default function HeaderBar() {
       clearCache("orders");
       clearCache(`order_${orderId}`);
 
+      toast.success("訂單已刪除");
       router.push("/");
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert(error instanceof Error ? error.message : "刪除訂單失敗");
+      toast.error(error instanceof Error ? error.message : "刪除訂單失敗");
     }
   };
 
@@ -136,7 +123,6 @@ export default function HeaderBar() {
         {/* Admin actions */}
         {!adminLoading && isAdminUser && user && (
           <>
-            {/* Create order button (on order list page) */}
             {pathname === "/" && (
               <CreateOrderDialog
                 trigger={
@@ -150,12 +136,12 @@ export default function HeaderBar() {
                 onSuccess={() => {
                   clearCache("orders");
                   window.dispatchEvent(new CustomEvent("order-updated"));
+                  toast.success("訂單已建立");
                   router.refresh();
                 }}
               />
             )}
 
-            {/* Create restaurant button (on restaurant list page) */}
             {pathname === "/menus" && (
               <CreateRestaurantDialog
                 trigger={
@@ -167,22 +153,30 @@ export default function HeaderBar() {
                   </Button>
                 }
                 onSuccess={() => {
+                  toast.success("店家已建立");
                   router.refresh();
                 }}
               />
             )}
 
-            {/* Order actions (on order detail page) */}
             {orderId && orderStatus === "active" && (
               <>
-                <Button
-                  onClick={handleDeleteOrder}
+                <ConfirmDialog
+                  trigger={
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="animate-in fade-in slide-in-from-right-2 duration-200"
+                    >
+                      刪除訂單
+                    </Button>
+                  }
+                  title="確定要刪除訂單嗎？"
+                  description="此操作將永久刪除訂單，且無法復原。"
+                  confirmText="刪除"
                   variant="destructive"
-                  size="sm"
-                  className="animate-in fade-in slide-in-from-right-2 duration-200"
-                >
-                  刪除訂單
-                </Button>
+                  onConfirm={handleDeleteOrder}
+                />
                 <Button
                   onClick={handleCloseOrder}
                   variant="default"
@@ -202,7 +196,6 @@ export default function HeaderBar() {
           </Link>
         </Button>
 
-        {/* Add order item button (on order detail page, for all logged-in users) */}
         {orderId && orderStatus === "active" && user && (
           <AddOrderItemDialog
             orderId={orderId}
@@ -224,6 +217,7 @@ export default function HeaderBar() {
                 })
               );
 
+              toast.success("已新增訂餐");
               router.refresh();
             }}
           />

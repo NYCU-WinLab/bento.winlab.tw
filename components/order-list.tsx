@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
 import type { OrderWithStats } from "@/types/database";
 import { useEffect } from "react";
@@ -37,6 +38,19 @@ export function OrderList() {
 
   const activeOrders = (orders || []).filter((o) => o.status === "active");
   const closedOrders = (orders || []).filter((o) => o.status === "closed");
+
+  if (loading && (!orders || orders.length === 0)) {
+    return (
+      <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
+        <Skeleton className="h-8 w-24 mx-2" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
