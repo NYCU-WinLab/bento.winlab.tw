@@ -40,7 +40,7 @@ export async function GET() {
     }
   });
 
-  let userProfilesMap = new Map<
+  const userProfilesMap = new Map<
     string,
     { id: string; name: string | null; avatarUrl: string | null }
   >();
