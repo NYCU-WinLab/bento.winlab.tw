@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { AddOrderItemDialog } from "./add-order-item-dialog";
 import { CreateOrderDialog } from "./create-order-dialog";
 import { CreateRestaurantDialog } from "./create-restaurant-dialog";
+import { ThemeToggle } from "./theme-toggle";
 
 export default function HeaderBar() {
   const { loading } = useAuth();
@@ -189,6 +190,8 @@ export default function HeaderBar() {
             )}
           </>
         )}
+
+        <ThemeToggle />
 
         <Button size="icon" variant="ghost">
           <Link href="https://github.com/NYCU-WinLab/bento.winlab.tw/issues/new/choose">
