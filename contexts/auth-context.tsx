@@ -2,6 +2,7 @@
 
 import { clearSupabaseCookies } from "@/lib/clear-cookies";
 import { createClient } from "@/lib/supabase/client";
+import { clearAllCache } from "@/lib/utils/cache";
 import type { User } from "@supabase/supabase-js";
 import {
   createContext,
@@ -40,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isCookieError = (error: any): boolean => {
-    const message = error?.message || "";
+  const isCookieError = (error: unknown): boolean => {
+    const message = (error as { message?: string })?.message || "";
     return (
       message.includes("Invalid") ||
       message.includes("corrupt") ||
@@ -108,8 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
-        console.log("User signed out - clearing cookies");
+        console.log("User signed out - clearing cookies and cache");
         clearSupabaseCookies();
+        clearAllCache();
       }
 
       if (event === "SIGNED_IN") {

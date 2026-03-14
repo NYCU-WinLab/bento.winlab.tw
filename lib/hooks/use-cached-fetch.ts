@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getCache, setCache, clearCache, isDataChanged } from '@/lib/utils/cache'
 
-interface UseCachedFetchOptions {
+interface UseCachedFetchOptions<T> {
   cacheKey: string
-  fetchFn: () => Promise<any>
+  fetchFn: () => Promise<T>
   skipCache?: boolean
-  onDataChange?: (data: any) => void
+  onDataChange?: (data: T) => void
 }
 
 /**
@@ -18,7 +18,7 @@ export function useCachedFetch<T>({
   fetchFn,
   skipCache = false,
   onDataChange,
-}: UseCachedFetchOptions) {
+}: UseCachedFetchOptions<T>) {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const fetchingRef = useRef(false)
@@ -41,13 +41,13 @@ export function useCachedFetch<T>({
 
       // Only update if data actually changed
       const cached = getCache<T>(key)
-      if (!cached || isDataChanged(cached, freshData)) {
-        setData(freshData)
-        onDataChangeRef.current?.(freshData)
+      if (!cached || isDataChanged(cached, freshData as T)) {
+        setData(freshData as T)
+        onDataChangeRef.current?.(freshData as T)
       }
 
       // Update cache
-      setCache(key, freshData)
+      setCache(key, freshData as T)
     } catch (error) {
       console.error(`Error fetching data for ${key}:`, error)
       // If fetch fails and we have cache, keep showing cache

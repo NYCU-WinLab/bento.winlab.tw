@@ -12,7 +12,7 @@ interface CacheOptions {
 /**
  * Set cache with timestamp
  */
-export function setCache(key: string, data: any, options: CacheOptions = {}) {
+export function setCache<T>(key: string, data: T, options: CacheOptions = {}) {
   try {
     localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(data))
     localStorage.setItem(`${CACHE_TIMESTAMP_PREFIX}${key}`, Date.now().toString())
