@@ -1,5 +1,6 @@
 "use client";
 
+import { parseOrderDate } from "@/lib/utils/date";
 import { ExternalLink } from "lucide-react";
 import { OrderStats } from "./order-stats";
 import { Badge } from "./ui/badge";
@@ -29,17 +30,6 @@ interface Order {
     additional?: string[] | null;
   };
   order_items?: OrderItem[];
-}
-
-// Parse order date from ID (yyyymmdd format)
-function parseOrderDate(orderId: string): string {
-  if (orderId.length === 8 && /^\d{8}$/.test(orderId)) {
-    const year = orderId.substring(0, 4);
-    const month = orderId.substring(4, 6);
-    const day = orderId.substring(6, 8);
-    return `${year}/${month}/${day}`;
-  }
-  return orderId; // Fallback to ID if format is unexpected
 }
 
 export function OrderDetailHeader({ order }: { order: Order }) {

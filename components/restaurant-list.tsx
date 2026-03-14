@@ -1,9 +1,7 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
+import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { isAdmin } from "@/lib/utils/admin-client";
-import { useEffect, useState } from "react";
 import { RestaurantCard } from "./restaurant-card";
 
 interface Restaurant {
@@ -15,9 +13,7 @@ interface Restaurant {
 }
 
 export function RestaurantList() {
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const { user } = useAuth();
+  const { isAdminUser } = useAdminCheck();
 
   const {
     data: restaurants = [],
@@ -35,31 +31,7 @@ export function RestaurantList() {
     },
   });
 
-  useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
-
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
   const handleRestaurantUpdate = () => {
-    // Force refresh when restaurant is updated
     invalidateCache();
     refetch();
   };

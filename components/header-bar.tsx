@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { isAdmin } from "@/lib/utils/admin-client";
+import { useAdminCheck } from "@/lib/hooks/use-admin-check";
+import { clearCache } from "@/lib/utils/cache";
 import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,24 +15,15 @@ import { CreateOrderDialog } from "./create-order-dialog";
 import { CreateRestaurantDialog } from "./create-restaurant-dialog";
 
 export default function HeaderBar() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
+  const { isAdminUser, adminLoading, user } = useAdminCheck();
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<"active" | "closed" | null>(
     null
   );
-
-  useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
 
   useEffect(() => {
     // Extract order ID from pathname if on order detail page
@@ -48,21 +40,6 @@ export default function HeaderBar() {
     }
   }, [pathname]);
 
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
   const fetchOrderStatus = async (id: string) => {
     try {
       const res = await fetch(`/api/orders/${id}`);
@@ -76,7 +53,6 @@ export default function HeaderBar() {
   };
 
   const handleLogin = async (provider: "google" | "keycloak") => {
-    // Use current origin instead of environment variable to ensure consistency
     const redirectTo = `${window.location.origin}/api/auth/callback`;
 
     await supabase.auth.signInWithOAuth({
@@ -100,8 +76,6 @@ export default function HeaderBar() {
       });
       if (res.ok) {
         setOrderStatus("closed");
-        // Clear cache and refresh
-        const { clearCache } = await import("@/lib/utils/cache");
         clearCache("orders");
         clearCache(`order_${orderId}`);
         router.refresh();
@@ -132,8 +106,6 @@ export default function HeaderBar() {
         throw new Error(data.error || "Failed to delete order");
       }
 
-      // Clear cache
-      const { clearCache } = await import("@/lib/utils/cache");
       clearCache("orders");
       clearCache(`order_${orderId}`);
 
@@ -175,9 +147,7 @@ export default function HeaderBar() {
                     新增訂單
                   </Button>
                 }
-                onSuccess={async () => {
-                  // Clear cache and notify order list to refresh
-                  const { clearCache } = await import("@/lib/utils/cache");
+                onSuccess={() => {
                   clearCache("orders");
                   window.dispatchEvent(new CustomEvent("order-updated"));
                   router.refresh();
@@ -244,13 +214,10 @@ export default function HeaderBar() {
                 新增訂餐
               </Button>
             }
-            onSuccess={async () => {
-              // Clear cache
-              const { clearCache } = await import("@/lib/utils/cache");
+            onSuccess={() => {
               clearCache("orders");
               clearCache(`order_${orderId}`);
 
-              // Dispatch custom event to trigger order list and detail refresh
               window.dispatchEvent(
                 new CustomEvent("order-updated", {
                   detail: { orderId },

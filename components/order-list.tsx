@@ -1,43 +1,17 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { isAdmin } from "@/lib/utils/admin-client";
-import { useEffect, useState } from "react";
+import type { OrderWithStats } from "@/types/database";
+import { useEffect } from "react";
 import { OrderCard } from "./order-card";
 
-interface Order {
-  id: string;
-  restaurant_id: string;
-  status: "active" | "closed";
-  created_at: string;
-  closed_at: string | null;
-  restaurants: {
-    name: string;
-  };
-  order_items?: {
-    menu_item_id: string;
-    no_sauce?: boolean;
-    menu_items: {
-      name: string;
-      price: number;
-    };
-    user_id: string;
-  }[];
-}
-
 export function OrderList() {
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const { user } = useAuth();
-
   const {
     data: orders = [],
     loading,
     refetch,
     invalidateCache,
-    updateData,
-  } = useCachedFetch<Order[]>({
+  } = useCachedFetch<OrderWithStats[]>({
     cacheKey: "orders",
     fetchFn: async () => {
       const res = await fetch("/api/orders");
@@ -47,14 +21,6 @@ export function OrderList() {
       return res.json();
     },
   });
-
-  useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
 
   // Listen for order update events to refresh the list
   useEffect(() => {
@@ -68,27 +34,6 @@ export function OrderList() {
       window.removeEventListener("order-updated", handleOrderUpdate);
     };
   }, [invalidateCache, refetch]);
-
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleOrderUpdate = () => {
-    // Clear cache and force refresh when order is created/updated
-    invalidateCache();
-    refetch();
-  };
 
   const activeOrders = (orders || []).filter((o) => o.status === "active");
   const closedOrders = (orders || []).filter((o) => o.status === "closed");

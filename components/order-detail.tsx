@@ -1,12 +1,10 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { isAdmin } from "@/lib/utils/admin-client";
+import { clearCache } from "@/lib/utils/cache";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { OrderDetailHeader } from "./order-detail-header";
-import { OrderItemsList } from "./order-items-list";
 
 interface OrderItem {
   id: string;
@@ -39,10 +37,12 @@ interface Order {
   };
   order_items: OrderItem[];
 }
+import { useEffect } from "react";
+import { OrderDetailHeader } from "./order-detail-header";
+import { OrderItemsList } from "./order-items-list";
 
 export function OrderDetail({ orderId }: { orderId: string }) {
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
+  const { isAdminUser } = useAdminCheck();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -64,19 +64,9 @@ export function OrderDetail({ orderId }: { orderId: string }) {
     skipCache: !orderId,
   });
 
-  useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
-
   // When user logs in after page load, refetch order so user names are populated
-  // Note: With new cache mechanism, this will automatically fetch on mount anyway
   useEffect(() => {
     if (!user) return;
-    // Invalidate anon cached order and fetch again with authenticated context
     invalidateCache();
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,7 +75,6 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   // Listen for order update events to refresh the order detail
   useEffect(() => {
     const handleOrderUpdate = () => {
-      // Refresh this order's data
       invalidateCache();
       refetch();
     };
@@ -95,39 +84,6 @@ export function OrderDetail({ orderId }: { orderId: string }) {
       window.removeEventListener("order-updated", handleOrderUpdate);
     };
   }, [invalidateCache, refetch]);
-
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleCloseOrder = async () => {
-    try {
-      const res = await fetch(`/api/orders/${orderId}/close`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        // Clear cache and force refresh
-        invalidateCache();
-        // Also clear orders list cache
-        const { clearCache } = await import("@/lib/utils/cache");
-        clearCache("orders");
-        refetch();
-      }
-    } catch (error) {
-      console.error("Error closing order:", error);
-    }
-  };
 
   const handleDeleteOrder = async () => {
     if (
@@ -149,12 +105,9 @@ export function OrderDetail({ orderId }: { orderId: string }) {
         throw new Error(data.error || "Failed to delete order");
       }
 
-      // Clear all caches
       invalidateCache();
-      const { clearCache } = await import("@/lib/utils/cache");
       clearCache("orders");
 
-      // Redirect to orders list
       router.push("/");
     } catch (error) {
       console.error("Error deleting order:", error);
@@ -181,9 +134,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           orderId={orderId}
           updateOrder={updateData}
           restaurantAdditional={order.restaurants?.additional || null}
-          onDelete={async () => {
-            // Also clear orders list cache
-            const { clearCache } = await import("@/lib/utils/cache");
+          onDelete={() => {
             clearCache("orders");
           }}
         />
