@@ -117,6 +117,9 @@ export default function HeaderBar() {
         <Link href="/rank" className="font-semibold text-lg">
           排名
         </Link>
+        <Link href="/stats" className="font-semibold text-lg">
+          統計
+        </Link>
       </nav>
 
       {/* Right side - User area */}
