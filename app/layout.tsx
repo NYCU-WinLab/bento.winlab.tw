@@ -21,6 +21,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bento | Winlab",
   description: "Meeting food ordering system for NYCU Winlab",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Bento",
+  },
 };
 
 export default function RootLayout({
