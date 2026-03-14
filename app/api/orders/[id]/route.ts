@@ -24,14 +24,19 @@ export async function GET(
   }
 
   // Fetch user profiles for order items in parallel
+  interface RawDetailItem {
+    user_id: string
+    [key: string]: unknown
+  }
+
   if (order && order.order_items) {
     const userIds = [
-      ...new Set(order.order_items.map((item: any) => item.user_id)),
+      ...new Set((order.order_items as RawDetailItem[]).map((item) => item.user_id)),
     ];
     if (userIds.length > 0) {
       const { data: profiles, error: profileError } = await supabase
         .from("user_profiles")
-        .select("id, name") // 只選擇 name，不選擇 email（隱私保護）
+        .select("id, name")
         .in("id", userIds);
 
       if (profileError) {
@@ -39,27 +44,18 @@ export async function GET(
       }
 
       if (profiles && profiles.length > 0) {
-        const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
-        order.order_items = order.order_items.map((item: any) => {
+        const profileMap = new Map(
+          profiles.map((p: { id: string; name: string | null }) => [p.id, p])
+        );
+        order.order_items = (order.order_items as RawDetailItem[]).map((item) => {
           const profile = profileMap.get(item.user_id);
-          if (profile) {
-            return {
-              ...item,
-              user: {
-                name: profile.name || null,
-                // email 不返回給前端（隱私保護）
-              },
-            };
-          }
-          // If profile not found, return null user (will show as "未知")
           return {
             ...item,
-            user: null,
+            user: profile ? { name: profile.name || null } : null,
           };
         });
       } else {
-        // If no profiles found, set user to null
-        order.order_items = order.order_items.map((item: any) => ({
+        order.order_items = (order.order_items as RawDetailItem[]).map((item) => ({
           ...item,
           user: null,
         }));

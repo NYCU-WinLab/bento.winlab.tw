@@ -5,6 +5,11 @@ export const revalidate = 60; // Cache for 60 seconds
 
 export async function GET() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   // Get all order items with user and menu item information
   const { data: orderItems, error: orderItemsError } = await supabase
@@ -21,8 +26,15 @@ export async function GET() {
   }
 
   // Get all user profiles
+  interface RawRankOrderItem {
+    user_id: string
+    menu_item_id: string
+    order_id: string
+    menu_items?: { price: number; name: string } | null
+  }
+
   const userIds = new Set<string>();
-  orderItems?.forEach((item: any) => {
+  (orderItems as unknown as RawRankOrderItem[] | null)?.forEach((item) => {
     if (item.user_id) {
       userIds.add(item.user_id);
     }
@@ -40,7 +52,7 @@ export async function GET() {
 
     if (profiles) {
       // Just use profiles without avatars
-      profiles.forEach((profile: any) => {
+      profiles.forEach((profile: { id: string; name: string | null }) => {
         userProfilesMap.set(profile.id, {
           id: profile.id,
           name: profile.name,
@@ -62,7 +74,7 @@ export async function GET() {
     }
   >();
 
-  orderItems?.forEach((item: any) => {
+  (orderItems as unknown as RawRankOrderItem[] | null)?.forEach((item) => {
     const userId = item.user_id;
     if (!userId) return;
 

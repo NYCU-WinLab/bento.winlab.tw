@@ -1,6 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+interface RawStatsItem {
+  order_id: string
+  menu_item_id: string
+  menu_items: { price: number; name: string; restaurant_id: string } | null
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -17,7 +23,7 @@ export async function GET() {
 
   // Get restaurant names separately
   const restaurantIds = new Set<string>()
-  orderItems?.forEach((item: any) => {
+  ;(orderItems as RawStatsItem[] | null)?.forEach((item) => {
     if (item.menu_items?.restaurant_id) {
       restaurantIds.add(item.menu_items.restaurant_id)
     }
@@ -31,7 +37,9 @@ export async function GET() {
       .in('id', Array.from(restaurantIds))
 
     if (restaurants) {
-      restaurantMap = new Map(restaurants.map((r: any) => [r.id, r.name]))
+      restaurantMap = new Map(
+        restaurants.map((r: { id: string; name: string }) => [r.id, r.name])
+      )
     }
   }
 
@@ -40,7 +48,7 @@ export async function GET() {
   // Count restaurant + item combinations (店名 品項名)
   const restaurantItemCounts: Record<string, { name: string; count: number }> = {}
 
-  orderItems?.forEach((item: any) => {
+  ;(orderItems as RawStatsItem[] | null)?.forEach((item) => {
     orderIds.add(item.order_id)
     const price = parseFloat(String(item.menu_items?.price || 0))
     totalSpending += price
@@ -73,4 +81,3 @@ export async function GET() {
     top_restaurant_items: topRestaurantItems,
   })
 }
-

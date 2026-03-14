@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { safeParseBody, createRestaurantSchema } from "@/lib/validations";
 import { requireAdmin } from "@/lib/utils/admin";
 import { NextResponse } from "next/server";
 
@@ -23,15 +24,12 @@ export async function POST(request: Request) {
   try {
     const { user } = await requireAdmin();
     const supabase = await createClient();
-    const body = await request.json();
 
-    // Validate input
-    if (!body.name || !body.phone) {
-      return NextResponse.json(
-        { error: "店家名稱和電話為必填項目" },
-        { status: 400 },
-      );
+    const parsed = await safeParseBody(request, createRestaurantSchema);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const body = parsed.data;
 
     const { data: menu, error } = await supabase
       .from("bento_menus")
@@ -60,11 +58,11 @@ export async function POST(request: Request) {
     ) {
       const menuItems = body.menu_items
         .filter(
-          (item: { name: string; price: string | number; type?: string }) =>
+          (item: { name: string; price: string | number; type?: string | null }) =>
             item.name && item.price,
         )
         .map(
-          (item: { name: string; price: string | number; type?: string }) => ({
+          (item: { name: string; price: string | number; type?: string | null }) => ({
             restaurant_id: menu.id,
             name: item.name.trim(),
             price:
