@@ -5,11 +5,6 @@ export const revalidate = 60; // Cache for 60 seconds
 
 export async function GET() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
 
   // Get all order items with user and menu item information
   const { data: orderItems, error: orderItemsError } = await supabase

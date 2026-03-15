@@ -7,11 +7,6 @@ export const revalidate = 10 // Cache for 10 seconds (orders change frequently)
 
 export async function GET() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
 
   const { data: orders, error } = await supabase
     .from('bento_orders')
