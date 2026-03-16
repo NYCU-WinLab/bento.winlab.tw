@@ -75,23 +75,7 @@ export function OrderItemsList({
 
     if (!orderId || !updateOrder) return;
 
-    // Get current order from cache for optimistic update
-    const { getCache } = await import("@/lib/utils/cache");
-    const currentOrder = getCache<Order>(`order_${orderId}`);
-    if (!currentOrder) {
-      alert("無法取得訂單資料");
-      return;
-    }
-
-    // Optimistic update: immediately update UI
-    const optimisticOrder: Order = {
-      ...currentOrder,
-      order_items: currentOrder.order_items.filter((item) => item.id !== id),
-    };
-    updateOrder(optimisticOrder);
-
     try {
-      // Sync with server
       const res = await fetch(`/api/order-items/${id}`, {
         method: "DELETE",
       });
@@ -100,19 +84,14 @@ export function OrderItemsList({
         throw new Error("Failed to delete order item");
       }
 
-      // Fetch fresh order
       const orderRes = await fetch(`/api/orders/${orderId}`);
       if (!orderRes.ok) {
         throw new Error("Failed to fetch order");
       }
       const freshOrder = await orderRes.json();
-
-      // Update with server data
       updateOrder(freshOrder);
       onDelete();
     } catch (error) {
-      // Rollback on error
-      updateOrder(currentOrder);
       const err =
         error instanceof Error ? error : new Error("Failed to delete");
       console.error("Error deleting item:", err);

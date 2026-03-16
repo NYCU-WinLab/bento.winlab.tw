@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { safeParseBody, updateRestaurantSchema } from "@/lib/validations";
 import { requireAdmin } from "@/lib/utils/admin";
 import { NextResponse } from "next/server";
 
@@ -38,7 +39,12 @@ export async function PUT(
     await requireAdmin();
     const { id } = await params;
     const supabase = await createClient();
-    const body = await request.json();
+
+    const parsed = await safeParseBody(request, updateRestaurantSchema);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const body = parsed.data;
 
     const updatePayload: Record<string, unknown> = {
       name: body.name,
@@ -89,7 +95,7 @@ export async function PUT(
           id?: string;
           name: string;
           price: string | number;
-          type?: string;
+          type?: string | null;
         }) => {
           const parsedPrice =
             typeof item.price === "number"

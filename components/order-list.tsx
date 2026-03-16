@@ -1,43 +1,18 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { isAdmin } from "@/lib/utils/admin-client";
-import { useEffect, useState } from "react";
+import type { OrderWithStats } from "@/types/database";
+import { useEffect } from "react";
 import { OrderCard } from "./order-card";
 
-interface Order {
-  id: string;
-  restaurant_id: string;
-  status: "active" | "closed";
-  created_at: string;
-  closed_at: string | null;
-  restaurants: {
-    name: string;
-  };
-  order_items?: {
-    menu_item_id: string;
-    no_sauce?: boolean;
-    menu_items: {
-      name: string;
-      price: number;
-    };
-    user_id: string;
-  }[];
-}
-
 export function OrderList() {
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
-  const { user } = useAuth();
-
   const {
     data: orders = [],
     loading,
     refetch,
     invalidateCache,
-    updateData,
-  } = useCachedFetch<Order[]>({
+  } = useCachedFetch<OrderWithStats[]>({
     cacheKey: "orders",
     fetchFn: async () => {
       const res = await fetch("/api/orders");
@@ -47,14 +22,6 @@ export function OrderList() {
       return res.json();
     },
   });
-
-  useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
 
   // Listen for order update events to refresh the list
   useEffect(() => {
@@ -69,29 +36,21 @@ export function OrderList() {
     };
   }, [invalidateCache, refetch]);
 
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleOrderUpdate = () => {
-    // Clear cache and force refresh when order is created/updated
-    invalidateCache();
-    refetch();
-  };
-
   const activeOrders = (orders || []).filter((o) => o.status === "active");
   const closedOrders = (orders || []).filter((o) => o.status === "closed");
+
+  if (loading && (!orders || orders.length === 0)) {
+    return (
+      <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
+        <Skeleton className="h-8 w-24 mx-2" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">

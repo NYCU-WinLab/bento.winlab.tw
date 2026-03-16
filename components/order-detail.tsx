@@ -1,10 +1,12 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
+import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { isAdmin } from "@/lib/utils/admin-client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { OrderDetailHeader } from "./order-detail-header";
 import { OrderItemsList } from "./order-items-list";
 
@@ -41,8 +43,7 @@ interface Order {
 }
 
 export function OrderDetail({ orderId }: { orderId: string }) {
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
+  const { isAdminUser } = useAdminCheck();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -65,27 +66,14 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   });
 
   useEffect(() => {
-    if (user) {
-      checkAdmin();
-    } else {
-      setAdminLoading(false);
-    }
-  }, [user]);
-
-  // When user logs in after page load, refetch order so user names are populated
-  // Note: With new cache mechanism, this will automatically fetch on mount anyway
-  useEffect(() => {
     if (!user) return;
-    // Invalidate anon cached order and fetch again with authenticated context
     invalidateCache();
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Listen for order update events to refresh the order detail
   useEffect(() => {
     const handleOrderUpdate = () => {
-      // Refresh this order's data
       invalidateCache();
       refetch();
     };
@@ -96,74 +84,20 @@ export function OrderDetail({ orderId }: { orderId: string }) {
     };
   }, [invalidateCache, refetch]);
 
-  const checkAdmin = async () => {
-    if (!user) {
-      setAdminLoading(false);
-      return;
-    }
-    try {
-      const admin = await isAdmin(user.id);
-      setIsAdminUser(admin);
-    } catch {
-      setIsAdminUser(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
-
-  const handleCloseOrder = async () => {
-    try {
-      const res = await fetch(`/api/orders/${orderId}/close`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        // Clear cache and force refresh
-        invalidateCache();
-        // Also clear orders list cache
-        const { clearCache } = await import("@/lib/utils/cache");
-        clearCache("orders");
-        refetch();
-      }
-    } catch (error) {
-      console.error("Error closing order:", error);
-    }
-  };
-
-  const handleDeleteOrder = async () => {
-    if (
-      !confirm(
-        `確定要刪除訂單「${order?.restaurants.name}」嗎？\n\n此操作將永久刪除訂單，且無法復原。`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete order");
-      }
-
-      // Clear all caches
-      invalidateCache();
-      const { clearCache } = await import("@/lib/utils/cache");
-      clearCache("orders");
-
-      // Redirect to orders list
-      router.push("/");
-    } catch (error) {
-      console.error("Error deleting order:", error);
-      alert(error instanceof Error ? error.message : "刪除訂單失敗");
-    }
-  };
-
   if (!order) {
-    return <div />;
+    return (
+      <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
+        <div className="space-y-4 mx-2">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
+    );
   }
 
   const isActive = order.status === "active";
@@ -181,10 +115,8 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           orderId={orderId}
           updateOrder={updateData}
           restaurantAdditional={order.restaurants?.additional || null}
-          onDelete={async () => {
-            // Also clear orders list cache
-            const { clearCache } = await import("@/lib/utils/cache");
-            clearCache("orders");
+          onDelete={() => {
+            window.dispatchEvent(new CustomEvent("order-updated"));
           }}
         />
       </div>

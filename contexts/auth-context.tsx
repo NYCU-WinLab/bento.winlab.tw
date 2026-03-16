@@ -40,8 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isCookieError = (error: any): boolean => {
-    const message = error?.message || "";
+  const isCookieError = (error: unknown): boolean => {
+    const message = (error as { message?: string })?.message || "";
     return (
       message.includes("Invalid") ||
       message.includes("corrupt") ||

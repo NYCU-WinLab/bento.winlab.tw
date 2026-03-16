@@ -21,14 +21,21 @@ export async function GET() {
   }
 
   // Get all user profiles
+  interface RawRankOrderItem {
+    user_id: string
+    menu_item_id: string
+    order_id: string
+    menu_items?: { price: number; name: string } | null
+  }
+
   const userIds = new Set<string>();
-  orderItems?.forEach((item: any) => {
+  (orderItems as unknown as RawRankOrderItem[] | null)?.forEach((item) => {
     if (item.user_id) {
       userIds.add(item.user_id);
     }
   });
 
-  let userProfilesMap = new Map<
+  const userProfilesMap = new Map<
     string,
     { id: string; name: string | null; avatarUrl: string | null }
   >();
@@ -40,7 +47,7 @@ export async function GET() {
 
     if (profiles) {
       // Just use profiles without avatars
-      profiles.forEach((profile: any) => {
+      profiles.forEach((profile: { id: string; name: string | null }) => {
         userProfilesMap.set(profile.id, {
           id: profile.id,
           name: profile.name,
@@ -62,7 +69,7 @@ export async function GET() {
     }
   >();
 
-  orderItems?.forEach((item: any) => {
+  (orderItems as unknown as RawRankOrderItem[] | null)?.forEach((item) => {
     const userId = item.user_id;
     if (!userId) return;
 

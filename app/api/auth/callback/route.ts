@@ -34,12 +34,12 @@ export async function GET(request: Request) {
         `${origin}/?error=corrupted_session`
       );
 
-      // Clear all Supabase auth cookies
-      const cookieNames = [
-        "sb-yissfqcdmzsxwfnzrflz-auth-token",
-        "sb-yissfqcdmzsxwfnzrflz-auth-token.0",
-        "sb-yissfqcdmzsxwfnzrflz-auth-token.1",
-      ];
+      // Clear all Supabase auth cookies (derive prefix from env)
+      const supabaseProjectId = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+        /\/\/([^.]+)\./
+      )?.[1] || ''
+      const cookiePrefix = `sb-${supabaseProjectId}-auth-token`
+      const cookieNames = [cookiePrefix, `${cookiePrefix}.0`, `${cookiePrefix}.1`];
 
       cookieNames.forEach((name) => {
         response.cookies.set(name, "", {

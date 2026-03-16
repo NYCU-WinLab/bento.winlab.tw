@@ -97,28 +97,7 @@ export function CreateOrderDialog({
         order_date: orderDate, // Pass the selected date to API
       };
 
-      // Create optimistic order
-      const optimisticOrder: Order = {
-        id: orderId,
-        restaurant_id: selectedRestaurant,
-        status: "active",
-        created_at: new Date().toISOString(),
-        closed_at: null,
-        restaurants: {
-          name: selectedRestaurantData.name,
-        },
-      };
-
-      // Get current orders from cache for optimistic update
-      const { getCache } = await import("@/lib/utils/cache");
-      const currentOrders = getCache<Order[]>("orders") || [];
-
-      // Optimistic update: immediately update UI
-      const optimisticOrders = [optimisticOrder, ...currentOrders];
-      updateOrders?.(optimisticOrders);
-
       try {
-        // Sync with server
         const res = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -130,27 +109,21 @@ export function CreateOrderDialog({
           throw new Error(errorData.error || "Failed to create order");
         }
 
-        // Fetch fresh orders list to replace optimistic order
         const ordersRes = await fetch("/api/orders");
         if (!ordersRes.ok) {
           throw new Error("Failed to fetch orders");
         }
         const freshOrders = await ordersRes.json();
-
-        // Update with server data
         updateOrders?.(freshOrders);
 
         setOpen(false);
         setSelectedRestaurant("");
         setOrderDate(() => {
-          // Reset to today's date
           const today = new Date();
           return today.toISOString().split("T")[0];
         });
         onSuccess();
       } catch (error) {
-        // Rollback on error
-        updateOrders?.(currentOrders);
         const err =
           error instanceof Error ? error : new Error("Failed to create order");
         console.error("Error creating order:", err);

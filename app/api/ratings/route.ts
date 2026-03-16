@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { safeParseBody, createRatingSchema } from '@/lib/validations'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -9,7 +10,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  const parsed = await safeParseBody(request, createRatingSchema)
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 })
+  }
+  const body = parsed.data
 
   // Upsert rating (update if exists, insert if not)
   const { data: rating, error } = await supabase
@@ -34,4 +39,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json(rating, { status: 201 })
 }
-
