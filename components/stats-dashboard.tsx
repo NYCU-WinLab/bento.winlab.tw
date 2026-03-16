@@ -1,8 +1,15 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 interface MonthlyStats {
   month: string;
@@ -43,10 +50,18 @@ export function StatsDashboard() {
   if (!data) return null;
 
   const currentMonth = data.monthly[data.monthly.length - 1];
-  const maxSpending = Math.max(
-    ...data.monthly.map((m) => m.totalSpending),
-    1
-  );
+
+  const chartConfig = {
+    totalSpending: {
+      label: "消費",
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+
+  const chartData = data.monthly.slice(-12).map((m) => ({
+    month: `${m.month.slice(5)}月`,
+    totalSpending: m.totalSpending,
+  }));
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-5xl mx-auto">
@@ -72,31 +87,68 @@ export function StatsDashboard() {
         </Card>
       </div>
 
-      {/* Monthly spending bar chart (pure CSS) */}
-      {data.monthly.length > 0 && (
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold mb-4">每月消費趨勢</h2>
-          <div className="flex items-end gap-2 h-48">
-            {data.monthly.slice(-12).map((m) => (
-              <div
-                key={m.month}
-                className="flex-1 flex flex-col items-center gap-1"
+      {/* Monthly spending area chart */}
+      {chartData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>每月消費趨勢</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-64 w-full">
+              <AreaChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               >
-                <span className="text-xs text-muted-foreground">
-                  ${m.totalSpending.toLocaleString()}
-                </span>
-                <div
-                  className="w-full bg-primary rounded-t-sm min-h-[4px] transition-all"
-                  style={{
-                    height: `${(m.totalSpending / maxSpending) * 100}%`,
-                  }}
+                <defs>
+                  <linearGradient id="fillSpending" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="5%"
+                      stopColor="var(--color-totalSpending)"
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--color-totalSpending)"
+                      stopOpacity={0.1}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
                 />
-                <span className="text-xs text-muted-foreground">
-                  {m.month.slice(5)}月
-                </span>
-              </div>
-            ))}
-          </div>
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(v) => `$${(v as number).toLocaleString()}`}
+                  width={70}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value) =>
+                        `$${(value as number).toLocaleString()}`
+                      }
+                    />
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="totalSpending"
+                  stroke="var(--color-totalSpending)"
+                  strokeWidth={2}
+                  fill="url(#fillSpending)"
+                  dot={{ r: 4, fill: "var(--color-totalSpending)" }}
+                  activeDot={{ r: 6 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
         </Card>
       )}
 
