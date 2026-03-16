@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -80,13 +81,22 @@ export function AddOrderItemDialog({
   const [restaurantAdditionalOptions, setRestaurantAdditionalOptions] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [userList, setUserList] = useState<{ id: string; name: string | null }[]>([]);
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const { user } = useAuth();
+  const { isAdminUser } = useAdminCheck();
 
   useEffect(() => {
     if (open) {
       fetchOrderAndMenu();
+      if (isAdminUser) {
+        fetch("/api/users")
+          .then((r) => r.json())
+          .then((data) => setUserList(Array.isArray(data) ? data : []))
+          .catch(() => setUserList([]));
+      }
     }
-  }, [open, orderId]);
+  }, [open, orderId, isAdminUser]);
 
   const fetchOrderAndMenu = async () => {
     try {
@@ -169,6 +179,7 @@ export function AddOrderItemDialog({
             menu_item_id: selectedItem,
             no_sauce: noSauce,
             additional: selectedAdditional,
+            ...(isAdminUser && targetUserId ? { target_user_id: targetUserId } : {}),
           }),
         });
 
@@ -189,6 +200,7 @@ export function AddOrderItemDialog({
         setSelectedItem("");
         setNoSauce(false);
         setSelectedAdditional(null);
+        setTargetUserId(null);
         onSuccess();
       } catch (error) {
         const err =
@@ -216,6 +228,25 @@ export function AddOrderItemDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
+          {isAdminUser && (
+            <div className="pb-4">
+              <Select
+                value={targetUserId ?? ""}
+                onValueChange={(v) => setTargetUserId(v || null)}
+              >
+                <SelectTrigger className="w-full text-base h-12">
+                  <SelectValue placeholder="代替哪位用戶點餐（留空為自己）" />
+                </SelectTrigger>
+                <SelectContent>
+                  {userList.map((u) => (
+                    <SelectItem key={u.id} value={u.id} className="text-base py-3">
+                      {u.name ?? u.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex items-center gap-4 pb-4">
             <div className="flex-1">
               <Select value={selectedItem} onValueChange={setSelectedItem}>

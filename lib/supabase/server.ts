@@ -1,8 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+
+/**
+ * Service role client — bypasses RLS. Use only after verifying admin access at the application level.
+ */
+export const createServiceClient = () => {
+  const serviceKey = process.env.SUPABASE_SECRET_KEY;
+  if (!serviceKey) throw new Error('SUPABASE_SECRET_KEY is not set');
+  return createSupabaseClient(supabaseUrl!, serviceKey);
+};
 
 export const createClient = async () => {
   const cookieStore = await cookies();
