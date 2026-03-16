@@ -160,40 +160,7 @@ export function AddOrderItemDialog({
       );
       if (!selectedMenuItem) return;
 
-      // Create optimistic order item
-      const optimisticItem: OrderItem = {
-        id: `temp_${Date.now()}`,
-        menu_item_id: selectedItem,
-        no_sauce: noSauce,
-        additional: selectedAdditional,
-        user_id: user.id,
-        menu_items: {
-          name: selectedMenuItem.name,
-          price: selectedMenuItem.price,
-        },
-        user: {
-          name: user.user_metadata?.name || user.email || "",
-          email: user.email || "",
-        },
-      };
-
-      // Get current order from cache for optimistic update (if updateOrder is provided)
-      let currentOrder: Order | null = null;
-      if (updateOrder) {
-        const { getCache } = await import("@/lib/utils/cache");
-        currentOrder = getCache<Order>(`order_${orderId}`) || null;
-        if (currentOrder) {
-          // Optimistic update: immediately update UI
-          const optimisticOrder: Order = {
-            ...currentOrder,
-            order_items: [...currentOrder.order_items, optimisticItem],
-          };
-          updateOrder(optimisticOrder);
-        }
-      }
-
       try {
-        // Sync with server
         const res = await fetch("/api/order-items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -209,7 +176,6 @@ export function AddOrderItemDialog({
           throw new Error("Failed to add order item");
         }
 
-        // Fetch fresh order to replace optimistic item (if updateOrder is provided)
         if (updateOrder) {
           const orderRes = await fetch(`/api/orders/${orderId}`);
           if (!orderRes.ok) {
@@ -225,10 +191,6 @@ export function AddOrderItemDialog({
         setSelectedAdditional(null);
         onSuccess();
       } catch (error) {
-        // Rollback on error (if updateOrder is provided)
-        if (updateOrder && currentOrder) {
-          updateOrder(currentOrder);
-        }
         const err =
           error instanceof Error ? error : new Error("Failed to add item");
         console.error("Error adding order item:", err);

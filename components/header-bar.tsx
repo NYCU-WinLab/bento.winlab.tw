@@ -6,7 +6,6 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminCheck } from "@/lib/hooks/use-admin-check";
-import { clearCache } from "@/lib/utils/cache";
 import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,8 +64,7 @@ export default function HeaderBar() {
       });
       if (res.ok) {
         setOrderStatus("closed");
-        clearCache("orders");
-        clearCache(`order_${orderId}`);
+        window.dispatchEvent(new CustomEvent("order-updated"));
         toast.success("訂單已關閉");
         router.refresh();
       } else {
@@ -93,8 +91,7 @@ export default function HeaderBar() {
         throw new Error(data.error || "Failed to delete order");
       }
 
-      clearCache("orders");
-      clearCache(`order_${orderId}`);
+      window.dispatchEvent(new CustomEvent("order-updated"));
 
       toast.success("訂單已刪除");
       router.push("/");
@@ -138,7 +135,6 @@ export default function HeaderBar() {
                   </Button>
                 }
                 onSuccess={() => {
-                  clearCache("orders");
                   window.dispatchEvent(new CustomEvent("order-updated"));
                   toast.success("訂單已建立");
                   router.refresh();
@@ -214,9 +210,6 @@ export default function HeaderBar() {
               </Button>
             }
             onSuccess={() => {
-              clearCache("orders");
-              clearCache(`order_${orderId}`);
-
               window.dispatchEvent(
                 new CustomEvent("order-updated", {
                   detail: { orderId },

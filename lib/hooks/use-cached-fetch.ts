@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getCache, setCache, clearCache, isDataChanged } from '@/lib/utils/cache'
 
 interface UseCachedFetchOptions<T> {
   cacheKey: string
@@ -9,9 +8,9 @@ interface UseCachedFetchOptions<T> {
 }
 
 /**
- * Unified hook for cached data fetching with stale-while-revalidate pattern
- * Always shows cache immediately (if available) and fetches fresh data in background
- * localStorage has no expiration - only API layer (Next.js revalidate) controls freshness
+ * Hook for data fetching with in-memory state.
+ * Fetches on mount and when cacheKey changes.
+ * No localStorage — data is always fresh from the server.
  */
 export function useCachedFetch<T>({
   cacheKey,
@@ -31,109 +30,47 @@ export function useCachedFetch<T>({
     onDataChangeRef.current = onDataChange
   }, [fetchFn, onDataChange])
 
-  const fetchFreshData = useCallback(async (key: string) => {
-    // Prevent concurrent fetches
+  const fetchFreshData = useCallback(async () => {
     if (fetchingRef.current) return
     fetchingRef.current = true
 
     try {
       const freshData = await fetchFnRef.current()
-
-      // Only update if data actually changed
-      const cached = getCache<T>(key)
-      if (!cached || isDataChanged(cached, freshData as T)) {
-        setData(freshData as T)
-        onDataChangeRef.current?.(freshData as T)
-      }
-
-      // Update cache
-      setCache(key, freshData as T)
+      setData(freshData as T)
+      onDataChangeRef.current?.(freshData as T)
     } catch (error) {
-      console.error(`Error fetching data for ${key}:`, error)
-      // If fetch fails and we have cache, keep showing cache
-      const cached = getCache<T>(key)
-      if (!cached) {
-        setLoading(false)
-      }
+      console.error(`Error fetching data for cache key:`, error)
     } finally {
       setLoading(false)
       fetchingRef.current = false
     }
   }, [])
 
-  const fetchData = useCallback(
-    async (forceRefresh = false) => {
-      // Always show cache first if available
-      const cached = getCache<T>(cacheKey)
-
-      if (cached && !skipCache && !forceRefresh) {
-        setData(cached)
-        setLoading(false)
-
-        // Always fetch fresh data in background (no maxAge check)
-        if (!fetchingRef.current) {
-          fetchFreshData(cacheKey)
-        }
-        return
-      }
-
-      // No cache or skipCache/forceRefresh=true, fetch fresh data
-      await fetchFreshData(cacheKey)
-    },
-    [cacheKey, skipCache, fetchFreshData]
-  )
-
-  const invalidateCache = useCallback(() => {
-    clearCache(cacheKey)
-  }, [cacheKey])
-
   const prevCacheKeyRef = useRef<string | null>(null)
-  const skipCacheRef = useRef(skipCache)
-
-  // Keep refs updated
-  useEffect(() => {
-    skipCacheRef.current = skipCache
-  }, [skipCache])
 
   useEffect(() => {
-    // Only fetch on mount or when cacheKey changes
-    const cacheKeyChanged = prevCacheKeyRef.current !== cacheKey
-    if (cacheKeyChanged) {
+    if (prevCacheKeyRef.current !== cacheKey) {
       prevCacheKeyRef.current = cacheKey
-
-      // Always show cache first if available
-      const cached = getCache<T>(cacheKey)
-
-      if (cached && !skipCacheRef.current) {
-        setData(cached)
-        setLoading(false)
-
-        // Always fetch fresh data in background (no maxAge check)
-        if (!fetchingRef.current) {
-          fetchFreshData(cacheKey)
-        }
-      } else {
-        // No cache or skipCache=true, fetch fresh data
-        fetchFreshData(cacheKey)
+      if (!skipCache) {
+        fetchFreshData()
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey]) // Only depend on cacheKey
+  }, [cacheKey])
 
-  const updateData = useCallback(
-    (newData: T) => {
-      setData(newData)
-      setCache(cacheKey, newData)
-    },
-    [cacheKey]
-  )
+  const invalidateCache = useCallback(() => {
+    // No-op for in-memory (kept for API compatibility)
+  }, [])
+
+  const updateData = useCallback((newData: T) => {
+    setData(newData)
+  }, [])
 
   return {
     data,
     loading,
-    refetch: () => fetchData(true),
+    refetch: fetchFreshData,
     invalidateCache,
-    updateData, // Allow direct data updates for optimistic updates
+    updateData,
   }
 }
-

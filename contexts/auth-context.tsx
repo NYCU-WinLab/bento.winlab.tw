@@ -2,7 +2,6 @@
 
 import { clearSupabaseCookies } from "@/lib/clear-cookies";
 import { createClient } from "@/lib/supabase/client";
-import { clearAllCache } from "@/lib/utils/cache";
 import type { User } from "@supabase/supabase-js";
 import {
   createContext,
@@ -109,9 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (event === "SIGNED_OUT") {
-        console.log("User signed out - clearing cookies and cache");
+        console.log("User signed out - clearing cookies");
         clearSupabaseCookies();
-        clearAllCache();
       }
 
       if (event === "SIGNED_IN") {

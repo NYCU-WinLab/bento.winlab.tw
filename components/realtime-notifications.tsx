@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { clearCache } from "@/lib/utils/cache";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -28,8 +27,6 @@ export function RealtimeNotifications() {
           toast.info("訂單已關閉", {
             description: `訂單 ${payload.new.id} 已被關閉`,
           });
-          clearCache("orders");
-          clearCache(`order_${payload.new.id}`);
           window.dispatchEvent(new CustomEvent("order-updated"));
         }
       )
@@ -44,7 +41,6 @@ export function RealtimeNotifications() {
           toast.info("新訂單", {
             description: "有新的訂單已建立",
           });
-          clearCache("orders");
           window.dispatchEvent(new CustomEvent("order-updated"));
         }
       )
@@ -60,7 +56,6 @@ export function RealtimeNotifications() {
             toast.info("新的訂餐", {
               description: "有人新增了訂餐項目",
             });
-            clearCache(`order_${payload.new.order_id}`);
             window.dispatchEvent(
               new CustomEvent("order-updated", {
                 detail: { orderId: payload.new.order_id },

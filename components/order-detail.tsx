@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import { clearCache } from "@/lib/utils/cache";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -117,7 +116,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           updateOrder={updateData}
           restaurantAdditional={order.restaurants?.additional || null}
           onDelete={() => {
-            clearCache("orders");
+            window.dispatchEvent(new CustomEvent("order-updated"));
           }}
         />
       </div>
