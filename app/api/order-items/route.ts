@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isAdminServer } from '@/lib/utils/admin'
 import { safeParseBody, createOrderItemSchema } from '@/lib/validations'
 import { NextResponse } from 'next/server'
 
@@ -16,12 +17,23 @@ export async function POST(request: Request) {
   }
   const body = parsed.data
 
+  // Determine which user's order this item belongs to
+  const targetUserId = body.target_user_id ?? user.id
+
+  // Only admins may place orders on behalf of other users
+  if (targetUserId !== user.id) {
+    const admin = await isAdminServer(user.id)
+    if (!admin) {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 })
+    }
+  }
+
   const { data: orderItem, error } = await supabase
     .from('bento_order_items')
     .insert({
       order_id: body.order_id,
       menu_item_id: body.menu_item_id,
-      user_id: user.id,
+      user_id: targetUserId,
       no_sauce: body.no_sauce || false,
       additional: body.additional !== undefined ? body.additional : null,
     })

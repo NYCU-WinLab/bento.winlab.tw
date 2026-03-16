@@ -11,6 +11,7 @@ export const createOrderItemSchema = z.object({
   menu_item_id: z.string().uuid(),
   no_sauce: z.boolean().default(false),
   additional: z.number().nullable().optional(),
+  target_user_id: z.string().uuid().optional(),
 })
 
 export const createRatingSchema = z.object({
