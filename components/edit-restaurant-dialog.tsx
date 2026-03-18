@@ -110,8 +110,7 @@ export function EditRestaurantDialog({
           })
       );
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, existingMenuItems]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
