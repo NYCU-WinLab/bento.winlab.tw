@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MenuImageUpload } from "./menu-image-upload";
 import { MenuParser } from "./menu-parser";
 import { Button } from "./ui/button";
@@ -81,6 +81,36 @@ export function EditRestaurantDialog({
       })
   );
   const [loading, setLoading] = useState(false);
+
+  // Re-sync state from props whenever the dialog opens,
+  // because the parent fetches menu items asynchronously after mount.
+  useEffect(() => {
+    if (open) {
+      setName(restaurant.name);
+      setPhone(restaurant.phone);
+      setGoogleMapLink(restaurant.google_map_link ?? "");
+      setAdditionalOptions(restaurant.additional || []);
+      setMenuItems(
+        existingMenuItems
+          .map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: String(item.price),
+            type: item.type,
+          }))
+          .sort((a, b) => {
+            if (a.type && b.type && a.type !== b.type) {
+              return a.type.localeCompare(b.type);
+            }
+            if (a.type && !b.type) return -1;
+            if (!a.type && b.type) return 1;
+            const priceA = parseFloat(a.price) || 0;
+            const priceB = parseFloat(b.price) || 0;
+            return priceA - priceB;
+          })
+      );
+    }
+  }, [open, existingMenuItems]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
