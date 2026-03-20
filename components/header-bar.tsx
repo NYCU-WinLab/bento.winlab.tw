@@ -198,7 +198,7 @@ export default function HeaderBar() {
           </Link>
         </Button>
 
-        {orderId && orderStatus === "active" && user && (
+        {orderId && orderStatus === "active" && (
           <AddOrderItemDialog
             orderId={orderId}
             trigger={

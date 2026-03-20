@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isAdminServer } from '@/lib/utils/admin'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(
@@ -13,7 +14,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Check if the order item belongs to the user
+  // Check if the order item exists
   const { data: orderItem, error: fetchError } = await supabase
     .from('bento_order_items')
     .select('user_id, order_id')
@@ -24,8 +25,13 @@ export async function DELETE(
     return NextResponse.json({ error: 'Order item not found' }, { status: 404 })
   }
 
-  if (orderItem.user_id !== user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  // Allow deletion if: item belongs to user, OR user is admin
+  const isOwner = orderItem.user_id === user.id
+  if (!isOwner) {
+    const admin = await isAdminServer(user.id)
+    if (!admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
   }
 
   // Check if order is still active
@@ -43,6 +49,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot delete item from closed order' }, { status: 400 })
   }
 
+  // RLS policies allow: owner deletes own items, any authenticated user deletes anonymous items
   const { error } = await supabase.from('bento_order_items').delete().eq('id', id)
 
   if (error) {

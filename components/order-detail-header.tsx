@@ -13,7 +13,7 @@ interface OrderItem {
     name: string;
     price: number;
   };
-  user_id: string;
+  user_id: string | null;
 }
 
 interface Order {

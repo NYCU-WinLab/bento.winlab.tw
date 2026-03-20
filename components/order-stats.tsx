@@ -11,7 +11,8 @@ interface OrderItemForStats {
     name: string;
     price: number;
   };
-  user_id: string;
+  user_id: string | null;
+  anonymous_name?: string | null;
 }
 
 interface OrderStatsProps {
@@ -24,7 +25,9 @@ export function OrderStats({ orderItems, restaurantAdditional, className }: Orde
   const items = orderItems || [];
 
   // Calculate statistics
-  const uniqueUsers = new Set(items.map((item) => item.user_id));
+  const uniqueUsers = new Set(
+    items.map((item) => item.user_id ?? `anon:${item.anonymous_name ?? "unknown"}`)
+  );
   const userCount = uniqueUsers.size;
 
   // Count menu items by option combinations (no_sauce + additional)

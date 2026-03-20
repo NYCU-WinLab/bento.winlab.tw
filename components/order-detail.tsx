@@ -15,7 +15,8 @@ interface OrderItem {
   menu_item_id: string;
   no_sauce: boolean;
   additional: number | null;
-  user_id: string;
+  user_id: string | null;
+  anonymous_name?: string | null;
   menu_items: {
     name: string;
     price: number;
@@ -112,6 +113,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           isActive={isActive}
           currentUserId={user?.id}
           currentUserName={user?.user_metadata?.name || user?.email || null}
+          isAdmin={isAdminUser}
           orderId={orderId}
           updateOrder={updateData}
           restaurantAdditional={order.restaurants?.additional || null}
