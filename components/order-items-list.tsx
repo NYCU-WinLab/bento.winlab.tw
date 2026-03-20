@@ -17,6 +17,7 @@ interface OrderItem {
   additional: number | null;
   user_id: string | null;
   anonymous_name?: string | null;
+  anonymous_contact?: string | null;
   menu_items: {
     name: string;
     price: number;
@@ -153,6 +154,11 @@ export function OrderItemsList({
               <ItemContent className="flex-1">
                 <ItemTitle className="text-lg">
                   {group.user_name || "未知"}
+                  {group.items[0]?.anonymous_contact && (
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      ({group.items[0].anonymous_contact})
+                    </span>
+                  )}
                 </ItemTitle>
                 <div className="flex flex-col gap-1.5 mt-1.5 text-muted-foreground">
                   {group.items.map((item) => (
