@@ -113,6 +113,7 @@ export function OrderDetail({ orderId }: { orderId: string }) {
           isActive={isActive}
           currentUserId={user?.id}
           currentUserName={user?.user_metadata?.name || user?.email || null}
+          isAdmin={isAdminUser}
           orderId={orderId}
           updateOrder={updateData}
           restaurantAdditional={order.restaurants?.additional || null}

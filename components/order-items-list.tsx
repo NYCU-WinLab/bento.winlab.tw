@@ -54,6 +54,7 @@ export function OrderItemsList({
   isActive,
   currentUserId,
   currentUserName,
+  isAdmin,
   onDelete,
   orderId,
   updateOrder,
@@ -63,6 +64,7 @@ export function OrderItemsList({
   isActive: boolean;
   currentUserId?: string;
   currentUserName?: string | null;
+  isAdmin?: boolean;
   onDelete: () => void;
   orderId?: string;
   updateOrder?: (order: Order) => void;
@@ -178,7 +180,7 @@ export function OrderItemsList({
                             {restaurantAdditional[item.additional]}
                           </Badge>
                         )}
-                      {isActive && currentUserId === item.user_id && (
+                      {isActive && (currentUserId === item.user_id || isAdmin) && (
                         <Button
                           variant="destructive"
                           size="sm"
