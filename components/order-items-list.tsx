@@ -154,7 +154,7 @@ export function OrderItemsList({
               <ItemContent className="flex-1">
                 <ItemTitle className="text-lg">
                   {group.user_name || "未知"}
-                  {isAdmin && group.items[0]?.anonymous_contact && (
+                  {group.items[0]?.anonymous_contact && (
                     <span className="ml-2 text-sm font-normal text-muted-foreground">
                       ({group.items[0].anonymous_contact})
                     </span>
