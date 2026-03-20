@@ -86,6 +86,8 @@ export function AddOrderItemDialog({
   const [userList, setUserList] = useState<{ id: string; name: string | null }[]>([]);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [anonymousName, setAnonymousName] = useState("");
+  const [anonymousContact, setAnonymousContact] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const { user } = useAuth();
   const { isAdminUser } = useAdminCheck();
   const isAnonymous = !user;
@@ -166,9 +168,19 @@ export function AddOrderItemDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedItem) return;
-    if (isAnonymous && !anonymousName.trim()) return;
+    if (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim())) return;
     if (!isAnonymous && !user) return;
 
+    // Anonymous users: show confirmation before submitting
+    if (isAnonymous && !showConfirm) {
+      setShowConfirm(true);
+      return;
+    }
+
+    await doSubmit();
+  };
+
+  const doSubmit = async () => {
     setLoading(true);
     try {
       const selectedMenuItem = menuItems.find(
@@ -185,6 +197,7 @@ export function AddOrderItemDialog({
               order_id: orderId,
               menu_item_id: selectedItem,
               anonymous_name: anonymousName.trim(),
+              anonymous_contact: anonymousContact.trim(),
               no_sauce: noSauce,
               additional: selectedAdditional,
             }
@@ -221,12 +234,14 @@ export function AddOrderItemDialog({
         setNoSauce(false);
         setSelectedAdditional(null);
         setTargetUserId(null);
+        setShowConfirm(false);
         onSuccess();
       } catch (error) {
         const err =
           error instanceof Error ? error : new Error("Failed to add item");
         console.error("Error adding order item:", err);
         alert(`新增訂餐失敗: ${err.message}`);
+        setShowConfirm(false);
       }
     } catch (error) {
       // Error already handled
@@ -249,11 +264,18 @@ export function AddOrderItemDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           {isAnonymous && (
-            <div className="pb-4">
+            <div className="space-y-3 pb-4">
               <Input
                 placeholder="請輸入您的姓名"
                 value={anonymousName}
                 onChange={(e) => setAnonymousName(e.target.value)}
+                className="text-base h-12"
+                required
+              />
+              <Input
+                placeholder="聯絡方式（電話或 LINE ID）"
+                value={anonymousContact}
+                onChange={(e) => setAnonymousContact(e.target.value)}
                 className="text-base h-12"
                 required
               />
@@ -370,22 +392,60 @@ export function AddOrderItemDialog({
               </div>
             )}
           </div>
+          {isAnonymous && showConfirm && (
+            <div className="rounded-lg border border-yellow-500/50 bg-yellow-50/50 dark:bg-yellow-950/20 p-4 mb-4 space-y-2">
+              <p className="font-semibold text-base">請確認您的訂餐資訊：</p>
+              <div className="text-sm space-y-1 text-muted-foreground">
+                <p>姓名：<span className="text-foreground font-medium">{anonymousName}</span></p>
+                <p>聯絡方式：<span className="text-foreground font-medium">{anonymousContact}</span></p>
+                <p>品項：<span className="text-foreground font-medium">
+                  {menuItems.find((item) => item.id === selectedItem)?.name ?? ""}
+                  {noSauce ? "（不醬）" : ""}
+                  {selectedAdditional !== null && restaurantAdditionalOptions?.[selectedAdditional]
+                    ? `（${restaurantAdditionalOptions[selectedAdditional]}）`
+                    : ""}
+                </span></p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="text-base h-11"
-            >
-              取消
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !selectedItem || (isAnonymous && !anonymousName.trim())}
-              className="text-base h-11"
-            >
-              {loading ? "新增中..." : "新增"}
-            </Button>
+            {isAnonymous && showConfirm ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowConfirm(false)}
+                  className="text-base h-11"
+                >
+                  返回修改
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="text-base h-11"
+                >
+                  {loading ? "新增中..." : "確認送出"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  className="text-base h-11"
+                >
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading || !selectedItem || (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim()))}
+                  className="text-base h-11"
+                >
+                  {loading ? "新增中..." : "新增"}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
