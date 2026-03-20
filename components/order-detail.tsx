@@ -15,7 +15,8 @@ interface OrderItem {
   menu_item_id: string;
   no_sauce: boolean;
   additional: number | null;
-  user_id: string;
+  user_id: string | null;
+  anonymous_name?: string | null;
   menu_items: {
     name: string;
     price: number;

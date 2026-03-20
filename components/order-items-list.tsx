@@ -15,14 +15,15 @@ interface OrderItem {
   menu_item_id: string;
   no_sauce: boolean;
   additional: number | null;
-  user_id: string;
+  user_id: string | null;
+  anonymous_name?: string | null;
   menu_items: {
     name: string;
     price: number;
   };
   user: {
     name: string | null;
-    email?: string; // Optional, may not be returned for privacy
+    email?: string;
   } | null;
 }
 
@@ -99,19 +100,19 @@ export function OrderItemsList({
     }
   };
 
-  // Group items by user
+  // Group items by user (or by anonymous_name for anonymous items)
   const groupedItems = items.reduce((acc, item) => {
-    const userId = item.user_id;
-    if (!acc[userId]) {
-      acc[userId] = {
-        user_id: userId,
-        user_name: item.user?.name || null,
+    const groupKey = item.user_id ?? `anon:${item.anonymous_name ?? "unknown"}`;
+    if (!acc[groupKey]) {
+      acc[groupKey] = {
+        user_id: groupKey,
+        user_name: item.user?.name || item.anonymous_name || null,
         items: [],
         total: 0,
       };
     }
-    acc[userId].items.push(item);
-    acc[userId].total += item.menu_items?.price || 0;
+    acc[groupKey].items.push(item);
+    acc[groupKey].total += item.menu_items?.price || 0;
     return acc;
   }, {} as Record<string, GroupedOrderItem>);
 

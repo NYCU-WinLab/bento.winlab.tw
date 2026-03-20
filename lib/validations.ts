@@ -14,6 +14,14 @@ export const createOrderItemSchema = z.object({
   target_user_id: z.string().uuid().optional(),
 })
 
+export const createAnonymousOrderItemSchema = z.object({
+  order_id: z.string().min(1),
+  menu_item_id: z.string().uuid(),
+  anonymous_name: z.string().min(1, '請輸入姓名').max(50),
+  no_sauce: z.boolean().default(false),
+  additional: z.number().nullable().optional(),
+})
+
 export const createRatingSchema = z.object({
   menu_item_id: z.string().uuid(),
   score: z.number().int().min(1).max(5),

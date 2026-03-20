@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import {
   Select,
@@ -36,7 +37,8 @@ interface OrderItem {
   menu_item_id: string;
   no_sauce: boolean;
   additional: number | null;
-  user_id: string;
+  user_id: string | null;
+  anonymous_name?: string | null;
   menu_items: {
     name: string;
     price: number;
@@ -44,7 +46,7 @@ interface OrderItem {
   user: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface Order {
@@ -83,8 +85,10 @@ export function AddOrderItemDialog({
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [userList, setUserList] = useState<{ id: string; name: string | null }[]>([]);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [anonymousName, setAnonymousName] = useState("");
   const { user } = useAuth();
   const { isAdminUser } = useAdminCheck();
+  const isAnonymous = !user;
 
   useEffect(() => {
     if (open) {
@@ -161,7 +165,9 @@ export function AddOrderItemDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedItem || !user) return;
+    if (!selectedItem) return;
+    if (isAnonymous && !anonymousName.trim()) return;
+    if (!isAnonymous && !user) return;
 
     setLoading(true);
     try {
@@ -171,20 +177,34 @@ export function AddOrderItemDialog({
       if (!selectedMenuItem) return;
 
       try {
-        const res = await fetch("/api/order-items", {
+        const endpoint = isAnonymous
+          ? "/api/order-items/anonymous"
+          : "/api/order-items";
+        const payload = isAnonymous
+          ? {
+              order_id: orderId,
+              menu_item_id: selectedItem,
+              anonymous_name: anonymousName.trim(),
+              no_sauce: noSauce,
+              additional: selectedAdditional,
+            }
+          : {
+              order_id: orderId,
+              menu_item_id: selectedItem,
+              no_sauce: noSauce,
+              additional: selectedAdditional,
+              ...(isAdminUser && targetUserId ? { target_user_id: targetUserId } : {}),
+            };
+
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            order_id: orderId,
-            menu_item_id: selectedItem,
-            no_sauce: noSauce,
-            additional: selectedAdditional,
-            ...(isAdminUser && targetUserId ? { target_user_id: targetUserId } : {}),
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
-          throw new Error("Failed to add order item");
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to add order item");
         }
 
         if (updateOrder) {
@@ -209,7 +229,7 @@ export function AddOrderItemDialog({
         alert(`新增訂餐失敗: ${err.message}`);
       }
     } catch (error) {
-      // Error already handled in onError callback
+      // Error already handled
     } finally {
       setLoading(false);
     }
@@ -228,6 +248,17 @@ export function AddOrderItemDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
+          {isAnonymous && (
+            <div className="pb-4">
+              <Input
+                placeholder="請輸入您的姓名"
+                value={anonymousName}
+                onChange={(e) => setAnonymousName(e.target.value)}
+                className="text-base h-12"
+                required
+              />
+            </div>
+          )}
           {isAdminUser && (
             <div className="pb-4">
               <Select
@@ -350,7 +381,7 @@ export function AddOrderItemDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !selectedItem}
+              disabled={loading || !selectedItem || (isAnonymous && !anonymousName.trim())}
               className="text-base h-11"
             >
               {loading ? "新增中..." : "新增"}

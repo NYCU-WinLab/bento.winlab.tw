@@ -25,13 +25,18 @@ export async function GET(
 
   // Fetch user profiles for order items in parallel
   interface RawDetailItem {
-    user_id: string
+    user_id: string | null
+    anonymous_name: string | null
     [key: string]: unknown
   }
 
   if (order && order.order_items) {
     const userIds = [
-      ...new Set((order.order_items as RawDetailItem[]).map((item) => item.user_id)),
+      ...new Set(
+        (order.order_items as RawDetailItem[])
+          .map((item) => item.user_id)
+          .filter((id): id is string => id !== null)
+      ),
     ];
     if (userIds.length > 0) {
       const { data: profiles, error: profileError } = await supabase
@@ -43,23 +48,29 @@ export async function GET(
         console.error("Error fetching user profiles:", profileError);
       }
 
-      if (profiles && profiles.length > 0) {
-        const profileMap = new Map(
-          profiles.map((p: { id: string; name: string | null }) => [p.id, p])
-        );
-        order.order_items = (order.order_items as RawDetailItem[]).map((item) => {
+      const profileMap = new Map(
+        (profiles || []).map((p: { id: string; name: string | null }) => [p.id, p])
+      );
+      order.order_items = (order.order_items as RawDetailItem[]).map((item) => {
+        if (item.user_id) {
           const profile = profileMap.get(item.user_id);
           return {
             ...item,
             user: profile ? { name: profile.name || null } : null,
           };
-        });
-      } else {
-        order.order_items = (order.order_items as RawDetailItem[]).map((item) => ({
+        }
+        // Anonymous item — use anonymous_name
+        return {
           ...item,
-          user: null,
-        }));
-      }
+          user: item.anonymous_name ? { name: item.anonymous_name } : null,
+        };
+      });
+    } else {
+      // All items are anonymous
+      order.order_items = (order.order_items as RawDetailItem[]).map((item) => ({
+        ...item,
+        user: item.anonymous_name ? { name: item.anonymous_name } : null,
+      }));
     }
   }
 
