@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { isAdminServer } from '@/lib/utils/admin'
 import { NextResponse } from 'next/server'
 
@@ -49,9 +49,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot delete item from closed order' }, { status: 400 })
   }
 
-  // Use service client for admin deleting others' items (RLS: auth.uid() = user_id)
-  const deleteClient = isOwner ? supabase : createServiceClient()
-  const { error } = await deleteClient.from('bento_order_items').delete().eq('id', id)
+  // RLS policies allow: owner deletes own items, any authenticated user deletes anonymous items
+  const { error } = await supabase.from('bento_order_items').delete().eq('id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
