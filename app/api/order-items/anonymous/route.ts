@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { safeParseBody, createAnonymousOrderItemSchema } from '@/lib/validations'
 import { NextResponse } from 'next/server'
 
@@ -25,10 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '訂單已關閉，無法新增' }, { status: 400 })
   }
 
-  // Use service role client to bypass RLS for anonymous insert
-  const serviceClient = createServiceClient()
-
-  const { data: orderItem, error } = await serviceClient
+  // RLS policy "Allow anonymous order item inserts" permits inserts
+  // where user_id IS NULL AND anonymous_name IS NOT NULL
+  const { data: orderItem, error } = await supabase
     .from('bento_order_items')
     .insert({
       order_id: body.order_id,
