@@ -3,8 +3,6 @@ import { safeParseBody, createRestaurantSchema } from "@/lib/validations";
 import { requireAdmin } from "@/lib/utils/admin";
 import { NextResponse } from "next/server";
 
-export const revalidate = 300; // Cache for 5 minutes (menus don't change often)
-
 export async function GET() {
   const supabase = await createClient();
 

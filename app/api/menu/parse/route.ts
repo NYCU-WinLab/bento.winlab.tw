@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseMenuImage } from '@/lib/openai/parse-menu'
+import { requireAdmin } from '@/lib/utils/admin'
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin()
     const formData = await request.formData()
     const file = formData.get('image') as File
 

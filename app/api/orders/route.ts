@@ -3,8 +3,6 @@ import { safeParseBody, createOrderSchema } from '@/lib/validations'
 import { requireAdmin } from '@/lib/utils/admin'
 import { NextResponse } from 'next/server'
 
-export const revalidate = 10 // Cache for 10 seconds (orders change frequently)
-
 export async function GET() {
   const supabase = await createClient()
 

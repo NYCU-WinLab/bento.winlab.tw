@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { checkIsAdmin } from './admin-shared'
 
 export async function isAdmin(userId: string): Promise<boolean> {
   const supabase = createClient()
@@ -18,16 +19,8 @@ export async function isAdmin(userId: string): Promise<boolean> {
       .eq('id', userId)
       .single()
 
-    // Check user_profiles.roles.bento array for "admin"
-    if (profile?.roles && typeof profile.roles === 'object') {
-      const bentoRoles = profile.roles.bento
-      if (Array.isArray(bentoRoles)) {
-        return bentoRoles.includes('admin')
-      }
-    }
-    return false
+    return checkIsAdmin(profile)
   } catch {
     return false
   }
 }
-

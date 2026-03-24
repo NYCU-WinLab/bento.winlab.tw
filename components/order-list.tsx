@@ -11,7 +11,6 @@ export function OrderList() {
     data: orders = [],
     loading,
     refetch,
-    invalidateCache,
   } = useCachedFetch<OrderWithStats[]>({
     cacheKey: "orders",
     fetchFn: async () => {
@@ -25,16 +24,11 @@ export function OrderList() {
 
   // Listen for order update events to refresh the list
   useEffect(() => {
-    const handleOrderUpdate = () => {
-      invalidateCache();
-      refetch();
-    };
-
-    window.addEventListener("order-updated", handleOrderUpdate);
+    window.addEventListener("order-updated", refetch);
     return () => {
-      window.removeEventListener("order-updated", handleOrderUpdate);
+      window.removeEventListener("order-updated", refetch);
     };
-  }, [invalidateCache, refetch]);
+  }, [refetch]);
 
   const activeOrders = (orders || []).filter((o) => o.status === "active");
   const closedOrders = (orders || []).filter((o) => o.status === "closed");

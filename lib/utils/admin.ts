@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { checkIsAdmin } from './admin-shared'
+
+export { checkIsAdmin }
 
 export async function isAdminServer(userId: string): Promise<boolean> {
   const supabase = await createClient()
@@ -16,14 +19,7 @@ export async function isAdminServer(userId: string): Promise<boolean> {
       .eq('id', userId)
       .single()
 
-    // Check user_profiles.roles.bento array for "admin"
-    if (profile?.roles && typeof profile.roles === 'object') {
-      const bentoRoles = profile.roles.bento
-      if (Array.isArray(bentoRoles)) {
-        return bentoRoles.includes('admin')
-      }
-    }
-    return false
+    return checkIsAdmin(profile)
   } catch {
     return false
   }
@@ -37,8 +33,13 @@ export async function requireAdmin() {
     throw new Error('Unauthorized')
   }
 
-  const admin = await isAdminServer(user.id)
-  if (!admin) {
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('roles')
+    .eq('id', user.id)
+    .single()
+
+  if (!checkIsAdmin(profile)) {
     throw new Error('Forbidden: Admin access required')
   }
 

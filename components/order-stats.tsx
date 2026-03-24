@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 
@@ -140,7 +141,7 @@ export function OrderStats({ orderItems, restaurantAdditional, className }: Orde
                   }
                   return null;
                 })
-                .filter((item): item is React.ReactElement => item !== null)}
+                .filter((item): item is ReactElement => item !== null)}
             </Badge>
           ))}
         </div>

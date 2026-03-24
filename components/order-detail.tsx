@@ -52,7 +52,6 @@ export function OrderDetail({ orderId }: { orderId: string }) {
     data: order,
     loading,
     refetch,
-    invalidateCache,
     updateData,
   } = useCachedFetch<Order>({
     cacheKey: `order_${orderId}`,
@@ -68,22 +67,16 @@ export function OrderDetail({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     if (!user) return;
-    invalidateCache();
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   useEffect(() => {
-    const handleOrderUpdate = () => {
-      invalidateCache();
-      refetch();
-    };
-
-    window.addEventListener("order-updated", handleOrderUpdate);
+    window.addEventListener("order-updated", refetch);
     return () => {
-      window.removeEventListener("order-updated", handleOrderUpdate);
+      window.removeEventListener("order-updated", refetch);
     };
-  }, [invalidateCache, refetch]);
+  }, [refetch]);
 
   if (!order) {
     return (

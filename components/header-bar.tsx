@@ -9,7 +9,7 @@ import { useAdminCheck } from "@/lib/hooks/use-admin-check";
 import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddOrderItemDialog } from "./add-order-item-dialog";
 import { CreateOrderDialog } from "./create-order-dialog";
@@ -21,36 +21,31 @@ export default function HeaderBar() {
   const { isAdminUser, adminLoading, user } = useAdminCheck();
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<"active" | "closed" | null>(
     null
   );
 
   useEffect(() => {
+    const controller = new AbortController();
     if (pathname?.startsWith("/orders/")) {
       const id = pathname.split("/orders/")[1];
       setOrderId(id || null);
       if (id) {
-        fetchOrderStatus(id);
+        fetch(`/api/orders/${id}`, { signal: controller.signal })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => data && setOrderStatus(data.status))
+          .catch((err) => {
+            if (err.name !== "AbortError") console.error("Error fetching order status:", err);
+          });
       }
     } else {
       setOrderId(null);
       setOrderStatus(null);
     }
+    return () => controller.abort();
   }, [pathname]);
-
-  const fetchOrderStatus = async (id: string) => {
-    try {
-      const res = await fetch(`/api/orders/${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrderStatus(data.status);
-      }
-    } catch (error) {
-      console.error("Error fetching order status:", error);
-    }
-  };
 
   const handleAvatarClick = () => {
     router.push("/me");
@@ -192,8 +187,13 @@ export default function HeaderBar() {
 
         <ThemeToggle />
 
-        <Button size="icon" variant="ghost">
-          <Link href="https://github.com/NYCU-WinLab/bento.winlab.tw/issues/new/choose">
+        <Button size="icon" variant="ghost" asChild>
+          <Link
+            href="https://github.com/NYCU-WinLab/bento.winlab.tw/issues/new/choose"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="回報問題"
+          >
             <CircleDot className="size-4" />
           </Link>
         </Button>
