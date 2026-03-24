@@ -15,7 +15,7 @@ export const createOrderItemSchema = z.object({
 })
 
 export const createAnonymousOrderItemSchema = z.object({
-  order_id: z.string().min(1),
+  order_id: z.string().uuid(),
   menu_item_id: z.string().uuid(),
   anonymous_name: z.string().min(1, '請輸入姓名').max(50),
   anonymous_contact: z.string().min(1, '請輸入聯絡方式').max(100),

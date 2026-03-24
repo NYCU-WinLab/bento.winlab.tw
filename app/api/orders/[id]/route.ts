@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/utils/admin";
 import { NextResponse } from "next/server";
 
-export const revalidate = 5; // Cache for 5 seconds (order details change frequently)
-
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

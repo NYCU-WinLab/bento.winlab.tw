@@ -58,7 +58,7 @@ export const createClient = (
           try {
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              domain: ".winlab.tw",
+              domain: process.env.NODE_ENV === "production" ? ".winlab.tw" : undefined,
               sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             });

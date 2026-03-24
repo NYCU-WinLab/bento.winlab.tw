@@ -56,7 +56,6 @@ export function RestaurantCard({
     data: restaurantData,
     loading: menuLoading,
     refetch: refetchMenu,
-    invalidateCache: invalidateMenuCache,
   } = useCachedFetch<{ menu_items: MenuItem[] }>({
     cacheKey: `restaurant_${restaurant.id}_menu`,
     fetchFn: async () => {
@@ -72,7 +71,6 @@ export function RestaurantCard({
     data: stats,
     loading: statsLoading,
     refetch: refetchStats,
-    invalidateCache: invalidateStatsCache,
   } = useCachedFetch<RestaurantStatsData>({
     cacheKey: `restaurant_${restaurant.id}_stats`,
     fetchFn: async () => {
@@ -88,8 +86,6 @@ export function RestaurantCard({
   const loading = menuLoading || statsLoading;
 
   const handleRestaurantUpdate = () => {
-    invalidateMenuCache();
-    invalidateStatsCache();
     refetchMenu();
     refetchStats();
     onUpdate();
@@ -116,9 +112,6 @@ export function RestaurantCard({
         throw new Error(data.error || "Failed to delete");
       }
 
-      // Clear all related cache
-      invalidateMenuCache();
-      invalidateStatsCache();
       onUpdate();
     } catch (error) {
       console.error("Error deleting restaurant:", error);

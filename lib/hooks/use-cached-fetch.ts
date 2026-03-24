@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-interface UseCachedFetchOptions<T> {
+interface UseFetchOptions<T> {
   cacheKey: string
   fetchFn: () => Promise<T>
   skipCache?: boolean
@@ -10,14 +10,13 @@ interface UseCachedFetchOptions<T> {
 /**
  * Hook for data fetching with in-memory state.
  * Fetches on mount and when cacheKey changes.
- * No localStorage — data is always fresh from the server.
  */
 export function useCachedFetch<T>({
   cacheKey,
   fetchFn,
   skipCache = false,
   onDataChange,
-}: UseCachedFetchOptions<T>) {
+}: UseFetchOptions<T>) {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const fetchingRef = useRef(false)
@@ -58,10 +57,6 @@ export function useCachedFetch<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey])
 
-  const invalidateCache = useCallback(() => {
-    // No-op for in-memory (kept for API compatibility)
-  }, [])
-
   const updateData = useCallback((newData: T) => {
     setData(newData)
   }, [])
@@ -70,7 +65,6 @@ export function useCachedFetch<T>({
     data,
     loading,
     refetch: fetchFreshData,
-    invalidateCache,
     updateData,
   }
 }

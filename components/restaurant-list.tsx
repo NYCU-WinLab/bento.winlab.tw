@@ -24,7 +24,6 @@ export function RestaurantList() {
     data: restaurants = [],
     loading,
     refetch,
-    invalidateCache,
   } = useCachedFetch<Restaurant[]>({
     cacheKey: "restaurants",
     fetchFn: async () => {
@@ -37,7 +36,6 @@ export function RestaurantList() {
   });
 
   const handleRestaurantUpdate = () => {
-    invalidateCache();
     refetch();
   };
 

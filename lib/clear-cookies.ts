@@ -4,25 +4,35 @@ export function clearSupabaseCookies() {
     return;
   }
 
+  const supabaseProjectId = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+    /\/\/([^.]+)\./
+  )?.[1];
+
+  if (!supabaseProjectId) {
+    console.warn("Could not determine Supabase project ID from URL");
+    return;
+  }
+
+  const cookiePrefix = `sb-${supabaseProjectId}-auth-token`;
   const cookieNames = [
-    "sb-yissfqcdmzsxwfnzrflz-auth-token.0",
-    "sb-yissfqcdmzsxwfnzrflz-auth-token.1",
-    "sb-yissfqcdmzsxwfnzrflz-auth-token.2",
+    `${cookiePrefix}.0`,
+    `${cookiePrefix}.1`,
+    `${cookiePrefix}.2`,
+  ];
+
+  const domains = [
+    "",
+    ".winlab.tw",
+    "portal.winlab.tw",
+    "approve.winlab.tw",
+    "bento.winlab.tw",
+    "reimburse.winlab.tw",
   ];
 
   cookieNames.forEach((name) => {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.winlab.tw;`;
-
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=portal.winlab.tw;`;
-
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=approve.winlab.tw;`;
-
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=bento.winlab.tw;`;
-
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=reimburse.winlab.tw;`;
+    domains.forEach((domain) => {
+      const domainPart = domain ? ` domain=${domain};` : "";
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${domainPart}`;
+    });
   });
-
-  console.log("Cleared all Supabase cookies");
 }

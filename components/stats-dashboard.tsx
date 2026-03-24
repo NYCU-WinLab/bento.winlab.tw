@@ -76,7 +76,7 @@ export function StatsDashboard() {
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">本月消費</p>
           <p className="text-3xl font-bold">
-            ${currentMonth?.totalSpending.toLocaleString() || 0}
+            ${(currentMonth?.totalSpending ?? 0).toLocaleString()}
           </p>
         </Card>
         <Card className="p-4">
