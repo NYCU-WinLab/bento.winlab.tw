@@ -28,7 +28,7 @@ Bento is an ordering system for NYCU WinLab (https://bento.winlab.tw). The UI is
 ### Data flow
 - Browser Supabase client: `lib/supabase/client.ts`
 - Server Supabase client: `lib/supabase/server.ts`
-- Auth middleware: `lib/supabase/middleware.ts`
+- Auth proxy: `lib/supabase/proxy.ts`
 - Auth context provider: `contexts/auth-context.tsx`
 - API routes in `app/api/` handle authorization and Supabase queries server-side
 
