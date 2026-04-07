@@ -1,6 +1,5 @@
 "use client";
 
-import { clearSupabaseCookies } from "@/lib/clear-cookies";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -34,88 +33,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-    } catch (error) {
-      console.error("Error refreshing user:", error);
+    } catch {
       setUser(null);
     }
-  };
-
-  const isCookieError = (error: unknown): boolean => {
-    const message = (error as { message?: string })?.message || "";
-    return (
-      message.includes("Invalid") ||
-      message.includes("corrupt") ||
-      message.includes("malformed") ||
-      message.includes("UTF-8") ||
-      message.includes("utf-8")
-    );
   };
 
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error("Error getting session:", error);
-
-          if (error.message.includes("429") || error.message.includes("rate")) {
-            console.warn("Rate limit detected - waiting before retry");
-            return;
-          }
-
-          if (isCookieError(error)) {
-            console.log("Clearing corrupted cookies");
-            clearSupabaseCookies();
-          }
-        }
-
-        if (mounted) {
-          setUser(session?.user ?? null);
-        }
-      } catch (error) {
-        console.error("Failed to initialize auth:", error);
-
-        if (isCookieError(error)) {
-          console.log("Clearing corrupted cookies");
-          clearSupabaseCookies();
-        }
-
-        if (mounted) {
-          setUser(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    };
-
-    initializeAuth();
+    }).catch(() => {
+      if (mounted) {
+        setUser(null);
+        setLoading(false);
+      }
+    });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
-
-      if (event === "TOKEN_REFRESHED") {
-        console.log("Token refreshed successfully");
-      }
-
-      if (event === "SIGNED_OUT") {
-        console.log("User signed out - clearing cookies");
-        clearSupabaseCookies();
-      }
-
-      if (event === "SIGNED_IN") {
-        console.log("User signed in");
-      }
-
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
         setUser(session?.user ?? null);
       }
