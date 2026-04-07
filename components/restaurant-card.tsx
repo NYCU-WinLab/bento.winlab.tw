@@ -1,6 +1,6 @@
 "use client";
 
-import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { useDeleteMenu, useMenu, useMenuStats } from "@/hooks/use-menus";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditRestaurantDialog } from "./edit-restaurant-dialog";
@@ -35,61 +35,19 @@ interface RestaurantStatsItem {
   average_rating: number;
 }
 
-interface RestaurantStatsData {
-  order_count: number;
-  total_spending: number;
-  items: RestaurantStatsItem[];
-}
-
 export function RestaurantCard({
   restaurant,
   isAdmin,
-  onUpdate,
 }: {
   restaurant: Restaurant;
   isAdmin: boolean;
-  onUpdate: () => void;
 }) {
-  const [deleting, setDeleting] = useState(false);
-
-  const {
-    data: restaurantData,
-    loading: menuLoading,
-    refetch: refetchMenu,
-  } = useCachedFetch<{ menu_items: MenuItem[] }>({
-    cacheKey: `restaurant_${restaurant.id}_menu`,
-    fetchFn: async () => {
-      const res = await fetch(`/api/menus/${restaurant.id}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch restaurant");
-      }
-      return res.json();
-    },
-  });
-
-  const {
-    data: stats,
-    loading: statsLoading,
-    refetch: refetchStats,
-  } = useCachedFetch<RestaurantStatsData>({
-    cacheKey: `restaurant_${restaurant.id}_stats`,
-    fetchFn: async () => {
-      const res = await fetch(`/api/menus/${restaurant.id}/stats`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch restaurant stats");
-      }
-      return res.json();
-    },
-  });
+  const { data: restaurantData, isLoading: menuLoading } = useMenu(restaurant.id);
+  const { data: stats, isLoading: statsLoading } = useMenuStats(restaurant.id);
+  const deleteMenu = useDeleteMenu(restaurant.id);
 
   const menuItems = restaurantData?.menu_items || [];
   const loading = menuLoading || statsLoading;
-
-  const handleRestaurantUpdate = () => {
-    refetchMenu();
-    refetchStats();
-    onUpdate();
-  };
 
   const handleDelete = async () => {
     if (
@@ -100,24 +58,11 @@ export function RestaurantCard({
       return;
     }
 
-    setDeleting(true);
     try {
-      const res = await fetch(`/api/menus/${restaurant.id}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete");
-      }
-
-      onUpdate();
+      await deleteMenu.mutateAsync();
     } catch (error) {
       console.error("Error deleting restaurant:", error);
       alert(error instanceof Error ? error.message : "刪除店家失敗");
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -157,16 +102,16 @@ export function RestaurantCard({
               <EditRestaurantDialog
                 restaurant={restaurant}
                 menuItems={menuItems}
-                onSuccess={handleRestaurantUpdate}
+                onSuccess={() => {}}
               />
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={handleDelete}
-                disabled={deleting}
+                disabled={deleteMenu.isPending}
               >
                 <Trash2 className="w-4 h-4 mr-1" />
-                {deleting ? "刪除中..." : "刪除"}
+                {deleteMenu.isPending ? "刪除中..." : "刪除"}
               </Button>
             </div>
           )}
@@ -212,22 +157,21 @@ export function RestaurantCard({
               <div className="space-y-2">
                 {menuItems
                   .slice()
-                  .sort((a, b) => {
+                  .sort((a: any, b: any) => {
                     const aStats =
-                      stats?.items.find((i) => i.id === a.id) || null;
+                      stats?.items.find((i: any) => i.id === a.id) || null;
                     const bStats =
-                      stats?.items.find((i) => i.id === b.id) || null;
+                      stats?.items.find((i: any) => i.id === b.id) || null;
                     const aCount = aStats?.order_count || 0;
                     const bCount = bStats?.order_count || 0;
                     if (aCount !== bCount) {
-                      return bCount - aCount; // more ordered first
+                      return bCount - aCount;
                     }
-                    // same count (including both 0): sort by price desc
                     return b.price - a.price;
                   })
-                  .map((item) => {
+                  .map((item: any) => {
                     const stat =
-                      stats?.items.find((i) => i.id === item.id) || null;
+                      stats?.items.find((i: any) => i.id === item.id) || null;
                     const orderCount = stat?.order_count || 0;
                     return (
                       <div

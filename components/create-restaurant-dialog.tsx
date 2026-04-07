@@ -1,5 +1,6 @@
 "use client";
 
+import { useCreateMenu } from "@/hooks/use-menus";
 import { useState } from "react";
 import { MenuImageUpload } from "./menu-image-upload";
 import { MenuParser } from "./menu-parser";
@@ -36,35 +37,20 @@ export function CreateRestaurantDialog({
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [additionalOptions, setAdditionalOptions] = useState<string[]>([]);
   const [newAdditionalOption, setNewAdditionalOption] = useState("");
-  const [loading, setLoading] = useState(false);
+  const createMenu = useCreateMenu();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
 
-    setLoading(true);
     try {
-      const res = await fetch("/api/menus", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          google_map_link: googleMapLink.trim() || null,
-          menu_items: menuItems,
-          additional: additionalOptions.length > 0 ? additionalOptions : null,
-        }),
+      await createMenu.mutateAsync({
+        name,
+        phone,
+        google_map_link: googleMapLink.trim() || null,
+        menu_items: menuItems,
+        additional: additionalOptions.length > 0 ? additionalOptions : null,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create restaurant");
-      }
-
-      if (data.warning) {
-        alert(`警告: ${data.warning}`);
-      }
 
       setOpen(false);
       setName("");
@@ -77,8 +63,6 @@ export function CreateRestaurantDialog({
     } catch (error) {
       console.error("Error creating restaurant:", error);
       alert(error instanceof Error ? error.message : "建立店家失敗");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -126,21 +110,17 @@ export function CreateRestaurantDialog({
               <Label>菜單圖片</Label>
               <MenuImageUpload
                 onParseComplete={(items) => {
-                  // Convert to MenuItem format with type
                   const formattedItems = items.map(item => ({
                     name: item.name,
                     price: String(item.price),
                     type: item.type || undefined,
                   }));
-                  // Sort items by type first, then by price (ascending)
                   const sortedItems = [...formattedItems].sort((a, b) => {
-                    // Group by type
                     if (a.type && b.type && a.type !== b.type) {
                       return a.type.localeCompare(b.type);
                     }
                     if (a.type && !b.type) return -1;
                     if (!a.type && b.type) return 1;
-                    // Then by price
                     const priceA = parseFloat(a.price) || 0;
                     const priceB = parseFloat(b.price) || 0;
                     return priceA - priceB;
@@ -232,8 +212,8 @@ export function CreateRestaurantDialog({
             >
               取消
             </Button>
-            <Button type="submit" disabled={loading || !name || !phone}>
-              {loading ? "建立中..." : "建立"}
+            <Button type="submit" disabled={createMenu.isPending || !name || !phone}>
+              {createMenu.isPending ? "建立中..." : "建立"}
             </Button>
           </DialogFooter>
         </form>

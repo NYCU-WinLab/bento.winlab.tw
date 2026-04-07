@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeleteOrderItem } from "@/hooks/use-order-items";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
@@ -28,21 +29,6 @@ interface OrderItem {
   } | null;
 }
 
-interface Order {
-  id: string;
-  restaurant_id: string;
-  status: "active" | "closed";
-  created_at: string;
-  closed_at: string | null;
-  restaurants: {
-    id: string;
-    name: string;
-    phone: string;
-    additional: string[] | null;
-  };
-  order_items: OrderItem[];
-}
-
 interface GroupedOrderItem {
   user_id: string;
   user_name: string | null;
@@ -56,9 +42,7 @@ export function OrderItemsList({
   currentUserId,
   currentUserName,
   isAdmin,
-  onDelete,
   orderId,
-  updateOrder,
   restaurantAdditional,
 }: {
   items: OrderItem[];
@@ -66,44 +50,22 @@ export function OrderItemsList({
   currentUserId?: string;
   currentUserName?: string | null;
   isAdmin?: boolean;
-  onDelete: () => void;
   orderId?: string;
-  updateOrder?: (order: Order) => void;
   restaurantAdditional?: string[] | null;
 }) {
+  const deleteItem = useDeleteOrderItem();
+
   const handleDelete = async (id: string) => {
-    if (!confirm("確定要刪除此訂餐項目嗎？") || !orderId) return;
-
-    const itemToDelete = items.find((item) => item.id === id);
-    if (!itemToDelete) return;
-
-    if (!orderId || !updateOrder) return;
-
+    if (!confirm("確定要刪除此訂餐項目嗎？")) return;
     try {
-      const res = await fetch(`/api/order-items/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete order item");
-      }
-
-      const orderRes = await fetch(`/api/orders/${orderId}`);
-      if (!orderRes.ok) {
-        throw new Error("Failed to fetch order");
-      }
-      const freshOrder = await orderRes.json();
-      updateOrder(freshOrder);
-      onDelete();
+      await deleteItem.mutateAsync(id);
     } catch (error) {
-      const err =
-        error instanceof Error ? error : new Error("Failed to delete");
+      const err = error instanceof Error ? error : new Error("Failed to delete");
       console.error("Error deleting item:", err);
       alert(`刪除失敗: ${err.message}`);
     }
   };
 
-  // Group items by user (or by anonymous_name for anonymous items)
   const groupedItems = items.reduce((acc, item) => {
     const groupKey = item.user_id ?? `anon:${item.anonymous_name ?? "unknown"}`;
     if (!acc[groupKey]) {
@@ -119,14 +81,11 @@ export function OrderItemsList({
     return acc;
   }, {} as Record<string, GroupedOrderItem>);
 
-  // Sort: current user first, then others by total descending
   const groupedItemsArray = Object.values(groupedItems).sort((a, b) => {
-    // If current user exists, put them first
     if (currentUserId) {
       if (a.user_id === currentUserId) return -1;
       if (b.user_id === currentUserId) return 1;
     }
-    // Sort others by total descending
     return b.total - a.total;
   });
 

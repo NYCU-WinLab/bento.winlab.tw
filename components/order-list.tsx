@@ -1,39 +1,16 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
-import type { OrderWithStats } from "@/types/database";
-import { useEffect } from "react";
+import { useOrders } from "@/hooks/use-orders";
 import { OrderCard } from "./order-card";
 
 export function OrderList() {
-  const {
-    data: orders = [],
-    loading,
-    refetch,
-  } = useCachedFetch<OrderWithStats[]>({
-    cacheKey: "orders",
-    fetchFn: async () => {
-      const res = await fetch("/api/orders");
-      if (!res.ok) {
-        throw new Error("Failed to fetch orders");
-      }
-      return res.json();
-    },
-  });
+  const { data: orders, isLoading } = useOrders();
 
-  // Listen for order update events to refresh the list
-  useEffect(() => {
-    window.addEventListener("order-updated", refetch);
-    return () => {
-      window.removeEventListener("order-updated", refetch);
-    };
-  }, [refetch]);
+  const activeOrders = (orders ?? []).filter((o) => o.status === "active");
+  const closedOrders = (orders ?? []).filter((o) => o.status === "closed");
 
-  const activeOrders = (orders || []).filter((o) => o.status === "active");
-  const closedOrders = (orders || []).filter((o) => o.status === "closed");
-
-  if (loading && (!orders || orders.length === 0)) {
+  if (isLoading && !orders) {
     return (
       <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
         <Skeleton className="h-8 w-24 mx-2" />
@@ -70,7 +47,7 @@ export function OrderList() {
         </div>
       )}
 
-      {(orders || []).length === 0 && (
+      {(orders ?? []).length === 0 && (
         <div className="text-center py-12 text-muted-foreground">尚無訂單</div>
       )}
     </div>

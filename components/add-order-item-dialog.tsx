@@ -1,8 +1,12 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { useAdminCheck } from "@/lib/hooks/use-admin-check";
-import React, { useEffect, useState } from "react";
+import { useAdmin } from "@/hooks/use-admin";
+import { useOrder } from "@/hooks/use-orders";
+import { useMenu } from "@/hooks/use-menus";
+import { useUsers } from "@/hooks/use-users";
+import { useAddOrderItem, useAdminAddItem, useAddAnonymousItem } from "@/hooks/use-order-items";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import {
@@ -29,139 +33,81 @@ interface MenuItem {
   name: string;
   price: number;
   type?: string | null;
-  order_count?: number; // Number of times this item has been ordered in this order
-}
-
-interface OrderItem {
-  id: string;
-  menu_item_id: string;
-  no_sauce: boolean;
-  additional: number | null;
-  user_id: string | null;
-  anonymous_name?: string | null;
-  menu_items: {
-    name: string;
-    price: number;
-  };
-  user: {
-    name: string;
-    email: string;
-  } | null;
-}
-
-interface Order {
-  id: string;
-  restaurant_id: string;
-  status: "active" | "closed";
-  created_at: string;
-  closed_at: string | null;
-  restaurants: {
-    id: string;
-    name: string;
-    phone: string;
-    additional: string[] | null;
-  };
-  order_items: OrderItem[];
+  order_count?: number;
 }
 
 export function AddOrderItemDialog({
   orderId,
   onSuccess,
-  updateOrder,
   trigger,
 }: {
   orderId: string;
   onSuccess: () => void;
-  updateOrder?: (order: Order) => void;
   trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedItem, setSelectedItem] = useState("");
   const [noSauce, setNoSauce] = useState(false);
   const [selectedAdditional, setSelectedAdditional] = useState<number | null>(null);
-  const [restaurantAdditionalOptions, setRestaurantAdditionalOptions] = useState<string[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [restaurantId, setRestaurantId] = useState<string | null>(null);
-  const [userList, setUserList] = useState<{ id: string; name: string | null }[]>([]);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [anonymousName, setAnonymousName] = useState("");
   const [anonymousContact, setAnonymousContact] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const { user } = useAuth();
-  const { isAdminUser } = useAdminCheck();
+  const { isAdmin: isAdminUser } = useAdmin();
   const isAnonymous = !user;
 
-  useEffect(() => {
-    if (open) {
-      fetchOrderAndMenu();
-      if (isAdminUser) {
-        fetch("/api/users")
-          .then((r) => r.json())
-          .then((data) => setUserList(Array.isArray(data) ? data : []))
-          .catch(() => setUserList([]));
+  const { data: order } = useOrder(open ? orderId : undefined);
+  const restaurantId = order?.restaurants?.id;
+  const { data: menuData } = useMenu(open ? restaurantId : undefined);
+  const { data: userList } = useUsers();
+
+  const addItem = useAddOrderItem();
+  const adminAddItem = useAdminAddItem();
+  const addAnonymousItem = useAddAnonymousItem();
+
+  const restaurantAdditionalOptions = order?.restaurants?.additional || null;
+
+  const menuItems: MenuItem[] = (() => {
+    const allMenuItems = menuData?.menu_items || [];
+    const orderItems = order?.order_items || [];
+    const itemCountMap = new Map<string, number>();
+
+    orderItems.forEach((item: any) => {
+      const menuItemId = item.menu_item_id;
+      itemCountMap.set(menuItemId, (itemCountMap.get(menuItemId) || 0) + 1);
+    });
+
+    const menuItemsWithCount = allMenuItems.map((item: any) => ({
+      ...item,
+      order_count: itemCountMap.get(item.id) || 0,
+    }));
+
+    menuItemsWithCount.sort((a: MenuItem, b: MenuItem) => {
+      const countA = a.order_count || 0;
+      const countB = b.order_count || 0;
+      if (countA !== countB) {
+        return countB - countA;
       }
-    }
-  }, [open, orderId, isAdminUser]);
+      if (a.type && b.type && a.type !== b.type) {
+        return a.type.localeCompare(b.type);
+      }
+      if (a.type && !b.type) return -1;
+      if (!a.type && b.type) return 1;
+      return b.price - a.price;
+    });
 
-  const fetchOrderAndMenu = async () => {
-    try {
-      const res = await fetch(`/api/orders/${orderId}`);
-      const data = await res.json();
-      setRestaurantId(data.restaurant_id);
+    return menuItemsWithCount;
+  })();
 
-      // Set restaurant additional options
-      const additionalOptions = data.restaurants?.additional || null;
-      setRestaurantAdditionalOptions(additionalOptions);
-
-      // Auto-select first additional option if available
-      if (additionalOptions && additionalOptions.length > 0) {
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value);
+    if (value) {
+      if (restaurantAdditionalOptions && restaurantAdditionalOptions.length > 0) {
         setSelectedAdditional(0);
       } else {
         setSelectedAdditional(null);
       }
-
-      if (data.restaurants?.id) {
-        const menuRes = await fetch(`/api/menus/${data.restaurants.id}`);
-        const menuData = await menuRes.json();
-        const allMenuItems = menuData.menu_items || [];
-
-        // Calculate order count for each menu item
-        const orderItems = data.order_items || [];
-        const itemCountMap = new Map<string, number>();
-
-        orderItems.forEach((item: any) => {
-          const menuItemId = item.menu_item_id;
-          itemCountMap.set(menuItemId, (itemCountMap.get(menuItemId) || 0) + 1);
-        });
-
-        // Add order count to menu items and sort
-        const menuItemsWithCount = allMenuItems.map((item: MenuItem) => ({
-          ...item,
-          order_count: itemCountMap.get(item.id) || 0,
-        }));
-
-        // Sort by order count (descending), then by type, then by price (descending - expensive first)
-        menuItemsWithCount.sort((a: MenuItem, b: MenuItem) => {
-          const countA = a.order_count || 0;
-          const countB = b.order_count || 0;
-          if (countA !== countB) {
-            return countB - countA; // Higher count first
-          }
-          // If same count, group by type
-          if (a.type && b.type && a.type !== b.type) {
-            return a.type.localeCompare(b.type);
-          }
-          if (a.type && !b.type) return -1;
-          if (!a.type && b.type) return 1;
-          // If same count and type, sort by price descending (expensive first)
-          return b.price - a.price; // Higher price first
-        });
-
-        setMenuItems(menuItemsWithCount);
-      }
-    } catch (error) {
-      console.error("Error fetching menu:", error);
     }
   };
 
@@ -171,7 +117,6 @@ export function AddOrderItemDialog({
     if (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim())) return;
     if (!isAnonymous && !user) return;
 
-    // Anonymous users: show confirmation before submitting
     if (isAnonymous && !showConfirm) {
       setShowConfirm(true);
       return;
@@ -181,77 +126,53 @@ export function AddOrderItemDialog({
   };
 
   const doSubmit = async () => {
-    setLoading(true);
     try {
-      const selectedMenuItem = menuItems.find(
-        (item) => item.id === selectedItem
-      );
-      if (!selectedMenuItem) return;
-
-      try {
-        const endpoint = isAnonymous
-          ? "/api/order-items/anonymous"
-          : "/api/order-items";
-        const payload = isAnonymous
-          ? {
-              order_id: orderId,
-              menu_item_id: selectedItem,
-              anonymous_name: anonymousName.trim(),
-              anonymous_contact: anonymousContact.trim(),
-              no_sauce: noSauce,
-              additional: selectedAdditional,
-            }
-          : {
-              order_id: orderId,
-              menu_item_id: selectedItem,
-              no_sauce: noSauce,
-              additional: selectedAdditional,
-              ...(isAdminUser && targetUserId ? { target_user_id: targetUserId } : {}),
-            };
-
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+      if (isAnonymous) {
+        await addAnonymousItem.mutateAsync({
+          order_id: orderId,
+          menu_item_id: selectedItem,
+          anonymous_name: anonymousName.trim(),
+          anonymous_contact: anonymousContact.trim(),
+          no_sauce: noSauce,
+          additional: selectedAdditional,
         });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "Failed to add order item");
-        }
-
-        if (updateOrder) {
-          const orderRes = await fetch(`/api/orders/${orderId}`);
-          if (!orderRes.ok) {
-            throw new Error("Failed to fetch order");
-          }
-          const freshOrder = await orderRes.json();
-          updateOrder(freshOrder);
-        }
-
-        setOpen(false);
-        setSelectedItem("");
-        setNoSauce(false);
-        setSelectedAdditional(null);
-        setTargetUserId(null);
-        setShowConfirm(false);
-        onSuccess();
-      } catch (error) {
-        const err =
-          error instanceof Error ? error : new Error("Failed to add item");
-        console.error("Error adding order item:", err);
-        alert(`新增訂餐失敗: ${err.message}`);
-        setShowConfirm(false);
+      } else if (isAdminUser && targetUserId) {
+        await adminAddItem.mutateAsync({
+          order_id: orderId,
+          menu_item_id: selectedItem,
+          user_id: targetUserId,
+          no_sauce: noSauce,
+          additional: selectedAdditional,
+        });
+      } else {
+        await addItem.mutateAsync({
+          order_id: orderId,
+          menu_item_id: selectedItem,
+          no_sauce: noSauce,
+          additional: selectedAdditional,
+        });
       }
+
+      setOpen(false);
+      setSelectedItem("");
+      setNoSauce(false);
+      setSelectedAdditional(null);
+      setTargetUserId(null);
+      setShowConfirm(false);
+      onSuccess();
     } catch (error) {
-      // Error already handled
-    } finally {
-      setLoading(false);
+      const err =
+        error instanceof Error ? error : new Error("Failed to add item");
+      console.error("Error adding order item:", err);
+      alert(`新增訂餐失敗: ${err.message}`);
+      setShowConfirm(false);
     }
   };
 
+  const isPending = addItem.isPending || adminAddItem.isPending || addAnonymousItem.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || <Button>新增訂餐</Button>}
       </DialogTrigger>
@@ -291,7 +212,7 @@ export function AddOrderItemDialog({
                   <SelectValue placeholder="代替哪位用戶點餐（留空為自己）" />
                 </SelectTrigger>
                 <SelectContent>
-                  {userList.map((u) => (
+                  {(userList ?? []).map((u) => (
                     <SelectItem key={u.id} value={u.id} className="text-base py-3">
                       {u.name ?? u.id}
                     </SelectItem>
@@ -308,7 +229,6 @@ export function AddOrderItemDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {(() => {
-                    // Group items by type
                     const grouped = new Map<string, MenuItem[]>();
                     menuItems.forEach((item) => {
                       const type = item.type || "其他";
@@ -318,10 +238,8 @@ export function AddOrderItemDialog({
                       grouped.get(type)!.push(item);
                     });
 
-                    // Render grouped items
                     const result: React.ReactElement[] = [];
                     grouped.forEach((items, type) => {
-                      // Add type header
                       if (grouped.size > 1) {
                         result.push(
                           <div
@@ -332,7 +250,6 @@ export function AddOrderItemDialog({
                           </div>
                         );
                       }
-                      // Add items in this group
                       items.forEach((item) => {
                         const orderCountText =
                           item.order_count && item.order_count > 0
@@ -382,7 +299,7 @@ export function AddOrderItemDialog({
                     <SelectValue placeholder="額外選項" />
                   </SelectTrigger>
                   <SelectContent>
-                    {restaurantAdditionalOptions.map((option, index) => (
+                    {restaurantAdditionalOptions.map((option: string, index: number) => (
                       <SelectItem key={index} value={index.toString()}>
                         {option}
                       </SelectItem>
@@ -421,10 +338,10 @@ export function AddOrderItemDialog({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={isPending}
                   className="text-base h-11"
                 >
-                  {loading ? "新增中..." : "確認送出"}
+                  {isPending ? "新增中..." : "確認送出"}
                 </Button>
               </>
             ) : (
@@ -439,10 +356,10 @@ export function AddOrderItemDialog({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || !selectedItem || (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim()))}
+                  disabled={isPending || !selectedItem || (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim()))}
                   className="text-base h-11"
                 >
-                  {loading ? "新增中..." : "新增"}
+                  {isPending ? "新增中..." : "新增"}
                 </Button>
               </>
             )}

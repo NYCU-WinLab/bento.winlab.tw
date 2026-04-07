@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useMenus } from "@/hooks/use-menus";
+import { useCreateOrder } from "@/hooks/use-orders";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
@@ -22,117 +24,45 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface Restaurant {
-  id: string;
-  name: string;
-}
-
-interface Order {
-  id: string;
-  restaurant_id: string;
-  status: "active" | "closed";
-  created_at: string;
-  closed_at: string | null;
-  restaurants: {
-    name: string;
-  };
-}
-
 export function CreateOrderDialog({
   onSuccess,
-  updateOrders,
   trigger,
 }: {
   onSuccess: () => void;
-  updateOrders?: (orders: Order[]) => void;
   trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState("");
   const [orderDate, setOrderDate] = useState(() => {
-    // Default to today's date in YYYY-MM-DD format
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
-  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-
-  useEffect(() => {
-    if (open) {
-      fetchRestaurants();
-    }
-  }, [open]);
-
-  const fetchRestaurants = async () => {
-    try {
-      const res = await fetch("/api/menus");
-      const data = await res.json();
-      setRestaurants(data);
-    } catch (error) {
-      console.error("Error fetching restaurants:", error);
-    }
-  };
+  const { data: restaurants } = useMenus();
+  const createOrder = useCreateOrder();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRestaurant || !orderDate || !user) return;
 
-    setLoading(true);
     try {
-      const selectedRestaurantData = restaurants.find(
-        (r) => r.id === selectedRestaurant
-      );
-      if (!selectedRestaurantData) return;
+      await createOrder.mutateAsync({
+        p_restaurant_id: selectedRestaurant,
+        p_order_date: orderDate,
+      });
 
-      // Generate date-based ID (yyyymmdd format) from selected date
-      const selectedDate = new Date(orderDate);
-      const year = selectedDate.getFullYear();
-      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-      const day = String(selectedDate.getDate()).padStart(2, "0");
-      const orderId = `${year}${month}${day}`;
-
-      const body = {
-        restaurant_id: selectedRestaurant,
-        order_date: orderDate, // Pass the selected date to API
-      };
-
-      try {
-        const res = await fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || "Failed to create order");
-        }
-
-        const ordersRes = await fetch("/api/orders");
-        if (!ordersRes.ok) {
-          throw new Error("Failed to fetch orders");
-        }
-        const freshOrders = await ordersRes.json();
-        updateOrders?.(freshOrders);
-
-        setOpen(false);
-        setSelectedRestaurant("");
-        setOrderDate(() => {
-          const today = new Date();
-          return today.toISOString().split("T")[0];
-        });
-        onSuccess();
-      } catch (error) {
-        const err =
-          error instanceof Error ? error : new Error("Failed to create order");
-        console.error("Error creating order:", err);
-        alert(`建立訂單失敗: ${err.message}`);
-      }
+      setOpen(false);
+      setSelectedRestaurant("");
+      setOrderDate(() => {
+        const today = new Date();
+        return today.toISOString().split("T")[0];
+      });
+      onSuccess();
     } catch (error) {
-      // Error already handled in onError callback
-    } finally {
-      setLoading(false);
+      const err =
+        error instanceof Error ? error : new Error("Failed to create order");
+      console.error("Error creating order:", err);
+      alert(`建立訂單失敗: ${err.message}`);
     }
   };
 
@@ -158,7 +88,7 @@ export function CreateOrderDialog({
                   <SelectValue placeholder="選擇店家" />
                 </SelectTrigger>
                 <SelectContent>
-                  {restaurants.map((restaurant) => (
+                  {(restaurants ?? []).map((restaurant: any) => (
                     <SelectItem key={restaurant.id} value={restaurant.id}>
                       {restaurant.name}
                     </SelectItem>
@@ -187,9 +117,9 @@ export function CreateOrderDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !selectedRestaurant || !orderDate}
+              disabled={createOrder.isPending || !selectedRestaurant || !orderDate}
             >
-              {loading ? "建立中..." : "建立"}
+              {createOrder.isPending ? "建立中..." : "建立"}
             </Button>
           </DialogFooter>
         </form>

@@ -4,12 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAuth } from "@/contexts/auth-context";
-import { createClient } from "@/lib/supabase/client";
-import { useAdminCheck } from "@/lib/hooks/use-admin-check";
+import { useAdmin } from "@/hooks/use-admin";
+import { useOrder, useCloseOrder, useDeleteOrder } from "@/hooks/use-orders";
 import { CircleDot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { AddOrderItemDialog } from "./add-order-item-dialog";
 import { CreateOrderDialog } from "./create-order-dialog";
@@ -17,35 +17,23 @@ import { CreateRestaurantDialog } from "./create-restaurant-dialog";
 import { ThemeToggle } from "./theme-toggle";
 
 export default function HeaderBar() {
-  const { loading } = useAuth();
-  const { isAdminUser, adminLoading, user } = useAdminCheck();
+  const { user, loading } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useAdmin();
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = useMemo(() => createClient(), []);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [orderStatus, setOrderStatus] = useState<"active" | "closed" | null>(
-    null
-  );
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const orderId = useMemo(() => {
     if (pathname?.startsWith("/orders/")) {
-      const id = pathname.split("/orders/")[1];
-      setOrderId(id || null);
-      if (id) {
-        fetch(`/api/orders/${id}`, { signal: controller.signal })
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => data && setOrderStatus(data.status))
-          .catch((err) => {
-            if (err.name !== "AbortError") console.error("Error fetching order status:", err);
-          });
-      }
-    } else {
-      setOrderId(null);
-      setOrderStatus(null);
+      return pathname.split("/orders/")[1] || null;
     }
-    return () => controller.abort();
+    return null;
   }, [pathname]);
+
+  const { data: orderData } = useOrder(orderId ?? undefined);
+  const orderStatus = orderData?.status ?? null;
+
+  const closeOrder = useCloseOrder();
+  const deleteOrder = useDeleteOrder();
 
   const handleAvatarClick = () => {
     router.push("/me");
@@ -54,18 +42,8 @@ export default function HeaderBar() {
   const handleCloseOrder = async () => {
     if (!orderId) return;
     try {
-      const res = await fetch(`/api/orders/${orderId}/close`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        setOrderStatus("closed");
-        window.dispatchEvent(new CustomEvent("order-updated"));
-        toast.success("訂單已關閉");
-        router.refresh();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "關閉訂單失敗");
-      }
+      await closeOrder.mutateAsync(orderId);
+      toast.success("訂單已關閉");
     } catch (error) {
       console.error("Error closing order:", error);
       toast.error("關閉訂單失敗");
@@ -74,20 +52,8 @@ export default function HeaderBar() {
 
   const handleDeleteOrder = async () => {
     if (!orderId) return;
-
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete order");
-      }
-
-      window.dispatchEvent(new CustomEvent("order-updated"));
-
+      await deleteOrder.mutateAsync(orderId);
       toast.success("訂單已刪除");
       router.push("/");
     } catch (error) {
@@ -98,7 +64,6 @@ export default function HeaderBar() {
 
   return (
     <header className="flex items-center justify-between p-4 px-6 w-full max-w-5xl mx-auto">
-      {/* Left side - Navigation links */}
       <nav className="flex items-center gap-4">
         <Link href="/" className="font-semibold text-lg">
           訂單
@@ -114,10 +79,8 @@ export default function HeaderBar() {
         </Link>
       </nav>
 
-      {/* Right side - User area */}
       <div className="flex items-center gap-3">
-        {/* Admin actions */}
-        {!adminLoading && isAdminUser && user && (
+        {!adminLoading && isAdmin && user && (
           <>
             {pathname === "/" && (
               <CreateOrderDialog
@@ -130,9 +93,7 @@ export default function HeaderBar() {
                   </Button>
                 }
                 onSuccess={() => {
-                  window.dispatchEvent(new CustomEvent("order-updated"));
                   toast.success("訂單已建立");
-                  router.refresh();
                 }}
               />
             )}
@@ -149,7 +110,6 @@ export default function HeaderBar() {
                 }
                 onSuccess={() => {
                   toast.success("店家已建立");
-                  router.refresh();
                 }}
               />
             )}
@@ -210,19 +170,11 @@ export default function HeaderBar() {
               </Button>
             }
             onSuccess={() => {
-              window.dispatchEvent(
-                new CustomEvent("order-updated", {
-                  detail: { orderId },
-                })
-              );
-
               toast.success("已新增訂餐");
-              router.refresh();
             }}
           />
         )}
 
-        {/* User avatar */}
         {loading ? (
           <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
         ) : user ? (

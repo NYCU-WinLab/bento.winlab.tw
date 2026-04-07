@@ -1,5 +1,6 @@
 "use client";
 
+import { useUpdateMenu } from "@/hooks/use-menus";
 import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MenuImageUpload } from "./menu-image-upload";
@@ -24,7 +25,6 @@ interface MenuItem {
   type?: string | null;
 }
 
-// MenuParser expects price as string
 type MenuParserItem = {
   id?: string;
   name: string;
@@ -62,28 +62,24 @@ export function EditRestaurantDialog({
   const [menuItems, setMenuItems] = useState<MenuParserItem[]>(
     existingMenuItems
       .map((item) => ({
-        id: item.id, // Keep the id for updates
+        id: item.id,
         name: item.name,
         price: String(item.price),
         type: item.type,
       }))
       .sort((a, b) => {
-        // Group by type first
         if (a.type && b.type && a.type !== b.type) {
           return a.type.localeCompare(b.type);
         }
         if (a.type && !b.type) return -1;
         if (!a.type && b.type) return 1;
-        // Then by price
         const priceA = parseFloat(a.price) || 0;
         const priceB = parseFloat(b.price) || 0;
         return priceA - priceB;
       })
   );
-  const [loading, setLoading] = useState(false);
+  const updateMenu = useUpdateMenu(restaurant.id);
 
-  // Re-sync state from props whenever the dialog opens,
-  // because the parent fetches menu items asynchronously after mount.
   useEffect(() => {
     if (open) {
       setName(restaurant.name);
@@ -116,36 +112,25 @@ export function EditRestaurantDialog({
     e.preventDefault();
     if (!name || !phone) return;
 
-    setLoading(true);
     try {
-      const res = await fetch(`/api/menus/${restaurant.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          google_map_link: googleMapLink.trim() || null,
-          menu_items: menuItems.map((item) => ({
-            id: item.id, // Include id for updates
-            name: item.name,
-            price: item.price,
-            type: item.type || null,
-          })),
-          additional: additionalOptions.length > 0 ? additionalOptions : null,
-        }),
+      await updateMenu.mutateAsync({
+        name,
+        phone,
+        google_map_link: googleMapLink.trim() || null,
+        menu_items: menuItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          type: item.type || null,
+        })),
+        additional: additionalOptions.length > 0 ? additionalOptions : null,
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to update restaurant");
-      }
 
       setOpen(false);
       onSuccess();
     } catch (error) {
       console.error("Error updating restaurant:", error);
       alert("更新店家失敗");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -196,7 +181,6 @@ export function EditRestaurantDialog({
               <Label>重新上傳菜單圖片（選填）</Label>
               <MenuImageUpload
                 onParseComplete={(items) => {
-                  // Sort items by type first, then price (ascending)
                   const sortedItems = [...items]
                     .map((item) => ({
                       name: item.name,
@@ -204,13 +188,11 @@ export function EditRestaurantDialog({
                       type: item.type,
                     }))
                     .sort((a, b) => {
-                      // Group by type first
                       if (a.type && b.type && a.type !== b.type) {
                         return a.type.localeCompare(b.type);
                       }
                       if (a.type && !b.type) return -1;
                       if (!a.type && b.type) return 1;
-                      // Then by price
                       const priceA = parseFloat(a.price) || 0;
                       const priceB = parseFloat(b.price) || 0;
                       return priceA - priceB;
@@ -300,8 +282,8 @@ export function EditRestaurantDialog({
             >
               取消
             </Button>
-            <Button type="submit" disabled={loading || !name || !phone}>
-              {loading ? "更新中..." : "更新"}
+            <Button type="submit" disabled={updateMenu.isPending || !name || !phone}>
+              {updateMenu.isPending ? "更新中..." : "更新"}
             </Button>
           </DialogFooter>
         </form>

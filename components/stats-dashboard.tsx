@@ -8,33 +8,13 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCachedFetch } from "@/lib/hooks/use-cached-fetch";
+import { useGlobalStats } from "@/hooks/use-stats";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-interface MonthlyStats {
-  month: string;
-  totalOrders: number;
-  totalSpending: number;
-  totalParticipants: number;
-}
-
-interface StatsData {
-  monthly: MonthlyStats[];
-  topRestaurants: Array<{ name: string; count: number }>;
-  totalOrders: number;
-}
-
 export function StatsDashboard() {
-  const { data, loading } = useCachedFetch<StatsData>({
-    cacheKey: "stats_dashboard",
-    fetchFn: async () => {
-      const res = await fetch("/api/stats");
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      return res.json();
-    },
-  });
+  const { data, isLoading } = useGlobalStats();
 
-  if (loading && !data) {
+  if (isLoading && !data) {
     return (
       <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
         <Skeleton className="h-8 w-48 mx-2" />
@@ -67,7 +47,6 @@ export function StatsDashboard() {
     <div className="flex flex-col gap-6 p-4 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mx-2">統計儀表板</h1>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">歷史訂單總數</p>
@@ -87,7 +66,6 @@ export function StatsDashboard() {
         </Card>
       </div>
 
-      {/* Monthly spending area chart */}
       {chartData.length > 0 && (
         <Card>
           <CardHeader>
@@ -152,7 +130,6 @@ export function StatsDashboard() {
         </Card>
       )}
 
-      {/* Top restaurants */}
       {data.topRestaurants.length > 0 && (
         <Card className="p-4">
           <h2 className="text-lg font-semibold mb-4">最常訂購店家</h2>
