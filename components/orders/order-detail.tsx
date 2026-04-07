@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdmin } from "@/hooks/use-admin";
 import { useOrder } from "@/hooks/use-orders";
-import { useDeleteOrderItem } from "@/hooks/use-order-items";
 import { OrderDetailHeader } from "./order-detail-header";
 import { OrderItemsList } from "./order-items-list";
 

@@ -10,6 +10,27 @@ interface OrderItemRaw {
   menu_items?: { name: string; price: number } | null
 }
 
+interface OrderItemWithUser extends OrderItemRaw {
+  id: string
+  order_id: string
+  menu_item_id: string
+  anonymous_name?: string | null
+  anonymous_contact?: string | null
+  no_sauce?: boolean
+  additional?: number | null
+  user?: { name: string | null } | null
+}
+
+interface OrderRow {
+  id: string
+  restaurant_id: string
+  status: string
+  created_at: string
+  closed_at: string | null
+  restaurants: { name: string; additional: string[] | null } | null
+  order_items: OrderItemWithUser[]
+}
+
 function computeOrderStats(orderItems: OrderItemRaw[]) {
   const uniqueUsers = new Set(
     orderItems.map((item) => item.user_id).filter(Boolean)
@@ -55,9 +76,9 @@ export function useOrders() {
 
       if (error) throw error
 
-      return (data || []).map((order: any) => ({
+      return (data || []).map((order) => ({
         ...order,
-        stats: computeOrderStats(order.order_items || []),
+        stats: computeOrderStats((order.order_items || []) as OrderItemRaw[]),
       }))
     },
   })
@@ -78,9 +99,10 @@ export function useOrder(id: string | undefined) {
       if (error) throw error
 
       if (order?.order_items) {
+        const items = order.order_items as OrderItemWithUser[]
         const userIds = [
           ...new Set(
-            (order.order_items as any[])
+            items
               .map((item) => item.user_id)
               .filter((id): id is string => id !== null)
           ),
@@ -96,7 +118,7 @@ export function useOrder(id: string | undefined) {
             (profiles || []).map((p: { id: string; name: string | null }) => [p.id, p])
           )
 
-          order.order_items = (order.order_items as any[]).map((item) => {
+          order.order_items = items.map((item) => {
             if (item.user_id) {
               const profile = profileMap.get(item.user_id)
               return { ...item, user: profile ? { name: profile.name || null } : null }
@@ -107,7 +129,7 @@ export function useOrder(id: string | undefined) {
             }
           })
         } else {
-          order.order_items = (order.order_items as any[]).map((item) => ({
+          order.order_items = (order.order_items as OrderItemWithUser[]).map((item) => ({
             ...item,
             user: item.anonymous_name ? { name: item.anonymous_name } : null,
           }))

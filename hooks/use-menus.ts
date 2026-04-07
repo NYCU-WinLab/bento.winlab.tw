@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/client"
 import { queryKeys } from "@/hooks/query-keys"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
+function unwrapRelation<T>(val: T | T[]): T | null {
+  if (Array.isArray(val)) return val[0] ?? null
+  return val ?? null
+}
+
 export function useMenus() {
   const supabase = createClient()
 
@@ -70,9 +75,10 @@ export function useMenuStats(id: string | undefined) {
           .in('order_id', orderIds)
 
         if (orderItems) {
-          for (const item of orderItems as any[]) {
+          for (const item of orderItems) {
             const menuItemId = item.menu_item_id
-            const price = parseFloat(String(item.menu_items?.price || 0))
+            const menuItem = unwrapRelation(item.menu_items)
+            const price = parseFloat(String(menuItem?.price || 0))
             totalSpending += price
 
             if (!itemCounts[menuItemId]) {
@@ -96,7 +102,7 @@ export function useMenuStats(id: string | undefined) {
         .in('menu_item_id', menuItemIds)
 
       const ratingMap = new Map<string, number[]>()
-      for (const rating of (allRatings || []) as any[]) {
+      for (const rating of allRatings || []) {
         if (!ratingMap.has(rating.menu_item_id)) {
           ratingMap.set(rating.menu_item_id, [])
         }

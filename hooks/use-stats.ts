@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/client"
 import { queryKeys } from "@/hooks/query-keys"
 import { useQuery } from "@tanstack/react-query"
 
+function unwrapRelation<T>(val: T | T[]): T | null {
+  if (Array.isArray(val)) return val[0] ?? null
+  return val ?? null
+}
+
 export function useGlobalStats() {
   const supabase = createClient()
 
@@ -28,7 +33,7 @@ export function useGlobalStats() {
         totalParticipants: number
       }>()
 
-      for (const order of (orders || []) as any[]) {
+      for (const order of orders || []) {
         const date = new Date(order.created_at)
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
@@ -45,17 +50,19 @@ export function useGlobalStats() {
         stats.totalOrders += 1
 
         const items = order.order_items || []
-        const users = new Set(items.map((i: any) => i.user_id))
+        const users = new Set(items.map((i) => i.user_id))
         stats.totalParticipants += users.size
 
         for (const item of items) {
-          stats.totalSpending += parseFloat(String(item.menu_items?.price || 0))
+          const menuItem = unwrapRelation(item.menu_items)
+          stats.totalSpending += parseFloat(String(menuItem?.price || 0))
         }
       }
 
       const restaurantFreq = new Map<string, { name: string; count: number }>()
-      for (const order of (orders || []) as any[]) {
-        const name = order.restaurants?.name || '未知'
+      for (const order of orders || []) {
+        const restaurant = unwrapRelation(order.restaurants)
+        const name = restaurant?.name || '未知'
         const existing = restaurantFreq.get(name) || { name, count: 0 }
         existing.count += 1
         restaurantFreq.set(name, existing)
@@ -91,7 +98,7 @@ export function useRankings() {
       if (error) throw error
 
       const userIds = new Set<string>()
-      for (const item of (orderItems || []) as any[]) {
+      for (const item of orderItems || []) {
         if (item.user_id) userIds.add(item.user_id)
       }
 
@@ -115,7 +122,7 @@ export function useRankings() {
         orderIds: Set<string>
       }>()
 
-      for (const item of (orderItems || []) as any[]) {
+      for (const item of orderItems || []) {
         const userId = item.user_id
         if (!userId) continue
 
@@ -131,7 +138,8 @@ export function useRankings() {
         }
 
         const stats = userStats.get(userId)!
-        stats.totalSpending += parseFloat(String(item.menu_items?.price || 0))
+        const menuItem = unwrapRelation(item.menu_items)
+        stats.totalSpending += parseFloat(String(menuItem?.price || 0))
         if (item.menu_item_id) stats.uniqueMenuItems.add(item.menu_item_id)
         if (item.order_id) stats.orderIds.add(item.order_id)
       }
@@ -183,9 +191,10 @@ export function useMyStats() {
       if (error) throw error
 
       const restaurantIds = new Set<string>()
-      for (const item of (orderItems || []) as any[]) {
-        if (item.menu_items?.restaurant_id) {
-          restaurantIds.add(item.menu_items.restaurant_id)
+      for (const item of orderItems || []) {
+        const menuItem = unwrapRelation(item.menu_items)
+        if (menuItem?.restaurant_id) {
+          restaurantIds.add(menuItem.restaurant_id)
         }
       }
 
@@ -207,12 +216,13 @@ export function useMyStats() {
       let totalSpending = 0
       const restaurantItemCounts: Record<string, { name: string; count: number }> = {}
 
-      for (const item of (orderItems || []) as any[]) {
+      for (const item of orderItems || []) {
         orderIdSet.add(item.order_id)
-        totalSpending += parseFloat(String(item.menu_items?.price || 0))
+        const menuItem = unwrapRelation(item.menu_items)
+        totalSpending += parseFloat(String(menuItem?.price || 0))
 
-        const restaurantId = item.menu_items?.restaurant_id
-        const menuItemName = item.menu_items?.name || ''
+        const restaurantId = menuItem?.restaurant_id
+        const menuItemName = menuItem?.name || ''
         const restaurantName = restaurantId ? (restaurantMap.get(restaurantId) || '') : ''
 
         if (restaurantName && menuItemName) {

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/proxy";
 import { type NextRequest, NextResponse } from "next/server";
 
-const publicPaths = ["/login", "/api/auth/callback", "/api/order-items/anonymous"];
+const publicPaths = ["/login", "/api/auth/callback"];
 
 export default async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
