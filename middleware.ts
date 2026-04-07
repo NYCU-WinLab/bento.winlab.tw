@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/proxy";
+import { createClient } from "@/lib/supabase/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 
 const publicPaths = ["/login", "/api/auth/callback", "/api/order-items/anonymous"];

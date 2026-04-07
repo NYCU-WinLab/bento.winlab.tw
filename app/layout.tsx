@@ -4,6 +4,7 @@ import HeaderBar from "@/components/header-bar";
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { RealtimeNotifications } from "@/components/realtime-notifications";
+import { QueryProvider } from "@/components/query-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
@@ -42,13 +43,15 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <AuthProvider>
-            <RealtimeNotifications />
-            <div className="flex flex-col min-h-dvh">
-              <HeaderBar />
-              <Separator />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <QueryProvider>
+              <RealtimeNotifications />
+              <div className="flex flex-col min-h-dvh">
+                <HeaderBar />
+                <Separator />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+            </QueryProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>
