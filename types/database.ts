@@ -39,7 +39,7 @@ export interface OrderItemWithUser extends OrderItem {
 export interface Order {
   id: string
   restaurant_id: string
-  status: 'active' | 'closed'
+  status: "active" | "closed"
   created_at: string
   closed_at: string | null
   auto_close_at?: string | null
@@ -51,7 +51,7 @@ export interface Order {
 export interface OrderWithStats {
   id: string
   restaurant_id: string
-  status: 'active' | 'closed'
+  status: "active" | "closed"
   created_at: string
   closed_at: string | null
   restaurants: {

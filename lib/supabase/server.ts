@@ -1,47 +1,45 @@
-import { createServerClient } from "@supabase/ssr";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { cookies } from "next/headers"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
 
 /**
  * Service role client — bypasses RLS. Use only after verifying admin access at the application level.
  */
 export const createServiceClient = () => {
-  const serviceKey = process.env.SUPABASE_SECRET_KEY;
-  if (!serviceKey) throw new Error('SUPABASE_SECRET_KEY is not set');
-  return createSupabaseClient(supabaseUrl!, serviceKey);
-};
+  const serviceKey = process.env.SUPABASE_SECRET_KEY
+  if (!serviceKey) throw new Error("SUPABASE_SECRET_KEY is not set")
+  return createSupabaseClient(supabaseUrl!, serviceKey)
+}
 
 export const createClient = async () => {
-  const cookieStore = await cookies();
+  const cookieStore = await cookies()
 
   return createServerClient(supabaseUrl!, supabaseKey!, {
     cookies: {
       getAll() {
-        const allCookies = cookieStore.getAll();
+        const allCookies = cookieStore.getAll()
         return allCookies.filter((cookie) => {
           try {
             if (cookie.value) {
-              Buffer.from(cookie.value, "utf-8");
+              Buffer.from(cookie.value, "utf-8")
             }
-            return true;
+            return true
           } catch (error) {
-            console.error(`Invalid cookie detected: ${cookie.name}`, error);
-            return false;
+            console.error(`Invalid cookie detected: ${cookie.name}`, error)
+            return false
           }
-        });
+        })
       },
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
             try {
-              const cookieSize = new Blob([value]).size;
+              const cookieSize = new Blob([value]).size
               if (cookieSize > 3500) {
-                console.warn(
-                  `Cookie ${name} is too large: ${cookieSize} bytes`
-                );
+                console.warn(`Cookie ${name} is too large: ${cookieSize} bytes`)
               }
 
               cookieStore.set(name, value, {
@@ -52,15 +50,15 @@ export const createClient = async () => {
                     : undefined,
                 sameSite: "lax",
                 secure: process.env.NODE_ENV === "production",
-              });
+              })
             } catch (error) {
-              console.error(`Failed to set cookie ${name}:`, error);
+              console.error(`Failed to set cookie ${name}:`, error)
             }
-          });
+          })
         } catch (error) {
-          console.error("Failed to set cookies:", error);
+          console.error("Failed to set cookies:", error)
         }
       },
     },
-  });
-};
+  })
+}

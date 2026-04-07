@@ -15,6 +15,7 @@
 ### Task 1: Add Zod validation + shared types + security headers
 
 **Files:**
+
 - Create: `types/database.ts`
 - Create: `lib/validations.ts`
 - Modify: `next.config.ts`
@@ -63,7 +64,7 @@ export interface Restaurant {
 export interface Order {
   id: string
   restaurant_id: string
-  status: 'active' | 'closed'
+  status: "active" | "closed"
   created_at: string
   closed_at: string | null
   auto_close_at: string | null
@@ -91,7 +92,7 @@ export interface OrderItemWithUser extends OrderItem {
   } | null
 }
 
-export interface OrderWithStats extends Omit<Order, 'order_items'> {
+export interface OrderWithStats extends Omit<Order, "order_items"> {
   order_items?: OrderItem[]
   stats: {
     user_count: number
@@ -145,11 +146,11 @@ export interface UserStats {
 Create `lib/validations.ts`:
 
 ```typescript
-import { z } from 'zod'
+import { z } from "zod"
 
 export const createOrderSchema = z.object({
   restaurant_id: z.string().uuid(),
-  order_date: z.string().min(1, '訂單日期為必填項目'),
+  order_date: z.string().min(1, "訂單日期為必填項目"),
   auto_close_at: z.string().nullable().optional(),
 })
 
@@ -166,15 +167,19 @@ export const createRatingSchema = z.object({
 })
 
 export const createRestaurantSchema = z.object({
-  name: z.string().min(1, '店家名稱為必填項目'),
-  phone: z.string().min(1, '電話為必填項目'),
+  name: z.string().min(1, "店家名稱為必填項目"),
+  phone: z.string().min(1, "電話為必填項目"),
   google_map_link: z.string().url().nullable().optional(),
   additional: z.array(z.string()).nullable().optional(),
-  menu_items: z.array(z.object({
-    name: z.string().min(1),
-    price: z.union([z.number(), z.string()]),
-    type: z.string().nullable().optional(),
-  })).optional(),
+  menu_items: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        price: z.union([z.number(), z.string()]),
+        type: z.string().nullable().optional(),
+      })
+    )
+    .optional(),
 })
 
 export const updateRestaurantSchema = z.object({
@@ -182,12 +187,16 @@ export const updateRestaurantSchema = z.object({
   phone: z.string().min(1).optional(),
   google_map_link: z.string().url().nullable().optional(),
   additional: z.any().optional(),
-  menu_items: z.array(z.object({
-    id: z.string().optional(),
-    name: z.string().min(1),
-    price: z.union([z.number(), z.string()]),
-    type: z.string().nullable().optional(),
-  })).optional(),
+  menu_items: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string().min(1),
+        price: z.union([z.number(), z.string()]),
+        type: z.string().nullable().optional(),
+      })
+    )
+    .optional(),
 })
 
 /**
@@ -201,11 +210,11 @@ export async function safeParseBody<T>(
   try {
     body = await request.json()
   } catch {
-    return { success: false, error: '無效的 JSON 格式' }
+    return { success: false, error: "無效的 JSON 格式" }
   }
   const result = schema.safeParse(body)
   if (!result.success) {
-    const message = result.error.issues.map(i => i.message).join(', ')
+    const message = result.error.issues.map((i) => i.message).join(", ")
     return { success: false, error: message }
   }
   return { success: true, data: result.data }
@@ -217,7 +226,7 @@ export async function safeParseBody<T>(
 Replace `next.config.ts`:
 
 ```typescript
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -235,11 +244,11 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
 ```
 
 - [ ] **Step 5: Create middleware.ts for auth session refresh**
@@ -247,24 +256,24 @@ export default nextConfig;
 Create `middleware.ts` at project root:
 
 ```typescript
-import { createClient } from "@/lib/supabase/proxy";
-import { type NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/proxy"
+import { type NextRequest, NextResponse } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({ request });
-  const supabase = createClient(request, response);
+  const response = NextResponse.next({ request })
+  const supabase = createClient(request, response)
 
   // Refresh the auth session to keep it alive
-  await supabase.auth.getUser();
+  await supabase.auth.getUser()
 
-  return response;
+  return response
 }
 
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-};
+}
 ```
 
 - [ ] **Step 6: Fix lang attribute in layout.tsx**
@@ -277,7 +286,7 @@ Update `app/api/orders/route.ts` POST handler to use `safeParseBody`:
 
 ```typescript
 // At top, add imports:
-import { safeParseBody, createOrderSchema } from '@/lib/validations'
+import { safeParseBody, createOrderSchema } from "@/lib/validations"
 
 // In POST function, replace `const body = await request.json()` block with:
 const parsed = await safeParseBody(request, createOrderSchema)
@@ -290,7 +299,7 @@ const body = parsed.data
 Update `app/api/order-items/route.ts` POST:
 
 ```typescript
-import { safeParseBody, createOrderItemSchema } from '@/lib/validations'
+import { safeParseBody, createOrderItemSchema } from "@/lib/validations"
 // Replace body parsing:
 const parsed = await safeParseBody(request, createOrderItemSchema)
 if (!parsed.success) {
@@ -302,7 +311,7 @@ const body = parsed.data
 Update `app/api/ratings/route.ts` POST:
 
 ```typescript
-import { safeParseBody, createRatingSchema } from '@/lib/validations'
+import { safeParseBody, createRatingSchema } from "@/lib/validations"
 // Replace body parsing:
 const parsed = await safeParseBody(request, createRatingSchema)
 if (!parsed.success) {
@@ -351,9 +360,8 @@ In `app/api/auth/callback/route.ts`, replace the hardcoded cookie names with a d
 
 ```typescript
 // Replace lines 38-42 with:
-const supabaseProjectId = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
-  /\/\/([^.]+)\./
-)?.[1] || ''
+const supabaseProjectId =
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/\/\/([^.]+)\./)?.[1] || ""
 const cookiePrefix = `sb-${supabaseProjectId}-auth-token`
 const cookieNames = [cookiePrefix, `${cookiePrefix}.0`, `${cookiePrefix}.1`]
 ```
@@ -363,7 +371,7 @@ const cookieNames = [cookiePrefix, `${cookiePrefix}.0`, `${cookiePrefix}.1`]
 In `app/api/orders/route.ts`, replace `any` with typed interfaces:
 
 ```typescript
-import type { OrderItem } from '@/types/database'
+import type { OrderItem } from "@/types/database"
 // Replace (order: any) with proper type
 // Replace (item: any) with OrderItem or inline type
 ```
@@ -392,6 +400,7 @@ git commit -m "feat: add security headers, Zod validation, middleware, shared ty
 ### Task 2: Extract useAdminCheck hook and shared parseOrderDate
 
 **Files:**
+
 - Create: `lib/hooks/use-admin-check.ts`
 - Create: `lib/utils/date.ts`
 - Modify: `components/order-list.tsx`
@@ -406,11 +415,11 @@ git commit -m "feat: add security headers, Zod validation, middleware, shared ty
 Create `lib/hooks/use-admin-check.ts`:
 
 ```typescript
-'use client'
+"use client"
 
-import { useAuth } from '@/contexts/auth-context'
-import { isAdmin } from '@/lib/utils/admin-client'
-import { useEffect, useState } from 'react'
+import { useAuth } from "@/contexts/auth-context"
+import { isAdmin } from "@/lib/utils/admin-client"
+import { useEffect, useState } from "react"
 
 export function useAdminCheck() {
   const { user } = useAuth()
@@ -437,7 +446,9 @@ export function useAdminCheck() {
     }
     check()
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
   return { isAdminUser, adminLoading, user }
@@ -465,7 +476,7 @@ export function parseOrderDate(orderId: string): string {
 In `components/order-list.tsx`, replace lines 5-6 imports and lines 30-85 (admin state + checkAdmin) with:
 
 ```typescript
-import { useAdminCheck } from '@/lib/hooks/use-admin-check'
+import { useAdminCheck } from "@/lib/hooks/use-admin-check"
 // Inside component:
 const { isAdminUser, adminLoading, user } = useAdminCheck()
 ```
@@ -473,6 +484,7 @@ const { isAdminUser, adminLoading, user } = useAdminCheck()
 Remove the `isAdmin` import, `useState` for admin state, `useEffect` for admin check, and `checkAdmin` function.
 
 Apply same pattern to:
+
 - `components/order-detail.tsx` (lines 44-112)
 - `components/restaurant-list.tsx` (lines 18-59)
 - `components/header-bar.tsx` (lines 21-64)
@@ -480,8 +492,9 @@ Apply same pattern to:
 - [ ] **Step 4: Replace duplicated parseOrderDate**
 
 In `components/order-card.tsx`, replace local `parseOrderDate` (lines 33-41) with:
+
 ```typescript
-import { parseOrderDate } from '@/lib/utils/date'
+import { parseOrderDate } from "@/lib/utils/date"
 ```
 
 In `components/order-detail-header.tsx`, same replacement (lines 34-43).
@@ -510,6 +523,7 @@ git commit -m "refactor: extract useAdminCheck hook, shared types, and parseOrde
 ### Task 3: Fix auth cache leak and improve cache utility types
 
 **Files:**
+
 - Modify: `contexts/auth-context.tsx:112`
 - Modify: `lib/hooks/use-cached-fetch.ts`
 - Modify: `lib/utils/cache.ts`
@@ -519,11 +533,11 @@ git commit -m "refactor: extract useAdminCheck hook, shared types, and parseOrde
 In `contexts/auth-context.tsx`, import `clearAllCache` and call it on SIGNED_OUT:
 
 ```typescript
-import { clearAllCache } from '@/lib/utils/cache'
+import { clearAllCache } from "@/lib/utils/cache"
 
 // In the onAuthStateChange handler, update the SIGNED_OUT block:
-if (event === 'SIGNED_OUT') {
-  console.log('User signed out - clearing cookies and cache')
+if (event === "SIGNED_OUT") {
+  console.log("User signed out - clearing cookies and cache")
   clearSupabaseCookies()
   clearAllCache()
 }
@@ -568,6 +582,7 @@ git commit -m "fix: clear localStorage cache on logout, remove any types from ca
 ### Task 4: Add Sonner toasts, AlertDialog, and loading skeletons
 
 **Files:**
+
 - Create: `components/ui/sonner.tsx`
 - Create: `components/confirm-dialog.tsx`
 - Modify: `app/layout.tsx` (add Toaster)
@@ -693,6 +708,7 @@ cd /Users/loki/bento && bunx shadcn@latest add alert-dialog
 - [ ] **Step 4: Replace alert/confirm in header-bar.tsx**
 
 In `components/header-bar.tsx`:
+
 - Import `toast` from `sonner`
 - Replace `alert(...)` calls with `toast.error(...)`
 - Replace `confirm(...)` in `handleDeleteOrder` with the ConfirmDialog component wrapping the delete button
@@ -750,6 +766,7 @@ Same pattern with a grid of skeleton cards.
 - [ ] **Step 8: Add toast for successful operations**
 
 In `components/header-bar.tsx`:
+
 - After successful order close: `toast.success('訂單已關閉')`
 - After successful order delete: `toast.success('訂單已刪除')`
 - After successful create: `toast.success('已建立')`
@@ -776,6 +793,7 @@ git commit -m "feat: add toast notifications, confirm dialogs, and loading skele
 ### Task 5: Fix dynamic imports and add page metadata
 
 **Files:**
+
 - Modify: `components/header-bar.tsx` (replace dynamic imports with top-level)
 - Modify: `components/order-detail.tsx` (same)
 - Create: `app/menus/layout.tsx` (metadata)
@@ -787,7 +805,7 @@ git commit -m "feat: add toast notifications, confirm dialogs, and loading skele
 In `components/header-bar.tsx`, replace all `await import("@/lib/utils/cache")` dynamic imports (lines 104, 137, 181, 249) with a top-level import:
 
 ```typescript
-import { clearCache } from '@/lib/utils/cache'
+import { clearCache } from "@/lib/utils/cache"
 ```
 
 Then replace `const { clearCache } = await import(...)` with direct `clearCache(...)` calls.
@@ -799,13 +817,17 @@ Apply same to `components/order-detail.tsx`.
 Create `app/menus/layout.tsx`:
 
 ```typescript
-import type { Metadata } from 'next'
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: '店家列表 | Bento',
+  title: "店家列表 | Bento",
 }
 
-export default function MenusLayout({ children }: { children: React.ReactNode }) {
+export default function MenusLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return children
 }
 ```
@@ -813,13 +835,17 @@ export default function MenusLayout({ children }: { children: React.ReactNode })
 Create `app/rank/layout.tsx`:
 
 ```typescript
-import type { Metadata } from 'next'
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: '排名 | Bento',
+  title: "排名 | Bento",
 }
 
-export default function RankLayout({ children }: { children: React.ReactNode }) {
+export default function RankLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return children
 }
 ```
@@ -827,10 +853,10 @@ export default function RankLayout({ children }: { children: React.ReactNode }) 
 Create `app/me/layout.tsx`:
 
 ```typescript
-import type { Metadata } from 'next'
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: '個人資料 | Bento',
+  title: "個人資料 | Bento",
 }
 
 export default function MeLayout({ children }: { children: React.ReactNode }) {
@@ -858,6 +884,7 @@ git commit -m "perf: replace dynamic imports with static, add page-level metadat
 ### Task 6: Add dark mode toggle button to header
 
 **Files:**
+
 - Create: `components/theme-toggle.tsx`
 - Modify: `components/header-bar.tsx`
 
@@ -929,6 +956,7 @@ git commit -m "feat: add dark mode toggle button in header"
 ### Task 7: Add search bar to restaurant list
 
 **Files:**
+
 - Modify: `components/restaurant-list.tsx`
 
 - [ ] **Step 1: Add search state and filter to restaurant-list.tsx**
@@ -987,6 +1015,7 @@ git commit -m "feat: add search bar to restaurant list page"
 ### Task 8: Add PWA manifest and service worker
 
 **Files:**
+
 - Create: `public/manifest.json`
 - Modify: `app/layout.tsx` (add manifest link)
 
@@ -1027,7 +1056,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Bento",
   },
-};
+}
 ```
 
 - [ ] **Step 3: Validate the build**
@@ -1050,6 +1079,7 @@ git commit -m "feat: add PWA manifest for mobile home screen support"
 ### Task 9A: Order history & statistics dashboard
 
 **Files:**
+
 - Create: `app/stats/page.tsx`
 - Create: `app/stats/layout.tsx`
 - Create: `components/stats-dashboard.tsx`
@@ -1061,39 +1091,56 @@ git commit -m "feat: add PWA manifest for mobile home screen support"
 Create `app/api/stats/route.ts`:
 
 ```typescript
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { createClient } from "@/lib/supabase/server"
+import { NextResponse } from "next/server"
 
 export const revalidate = 60
 
 export async function GET() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   // Get all closed orders with items
   const { data: orders, error } = await supabase
-    .from('bento_orders')
-    .select('id, restaurant_id, status, created_at, closed_at, restaurants:bento_menus(name), order_items:bento_order_items(user_id, menu_items:bento_menu_items(price))')
-    .eq('status', 'closed')
-    .order('created_at', { ascending: false })
+    .from("bento_orders")
+    .select(
+      "id, restaurant_id, status, created_at, closed_at, restaurants:bento_menus(name), order_items:bento_order_items(user_id, menu_items:bento_menu_items(price))"
+    )
+    .eq("status", "closed")
+    .order("created_at", { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   // Monthly spending summary
-  const monthlyStats = new Map<string, { month: string; totalOrders: number; totalSpending: number; totalParticipants: number }>()
+  const monthlyStats = new Map<
+    string,
+    {
+      month: string
+      totalOrders: number
+      totalSpending: number
+      totalParticipants: number
+    }
+  >()
 
   for (const order of orders || []) {
     const date = new Date(order.created_at)
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
 
     if (!monthlyStats.has(monthKey)) {
-      monthlyStats.set(monthKey, { month: monthKey, totalOrders: 0, totalSpending: 0, totalParticipants: 0 })
+      monthlyStats.set(monthKey, {
+        month: monthKey,
+        totalOrders: 0,
+        totalSpending: 0,
+        totalParticipants: 0,
+      })
     }
 
     const stats = monthlyStats.get(monthKey)!
@@ -1104,14 +1151,18 @@ export async function GET() {
     stats.totalParticipants += users.size
 
     for (const item of items) {
-      stats.totalSpending += parseFloat(String((item as { menu_items?: { price?: number } }).menu_items?.price || 0))
+      stats.totalSpending += parseFloat(
+        String(
+          (item as { menu_items?: { price?: number } }).menu_items?.price || 0
+        )
+      )
     }
   }
 
   // Restaurant frequency
   const restaurantFreq = new Map<string, { name: string; count: number }>()
   for (const order of orders || []) {
-    const name = (order.restaurants as { name: string } | null)?.name || '未知'
+    const name = (order.restaurants as { name: string } | null)?.name || "未知"
     const existing = restaurantFreq.get(name) || { name, count: 0 }
     existing.count += 1
     restaurantFreq.set(name, existing)
@@ -1122,7 +1173,9 @@ export async function GET() {
     .slice(0, 10)
 
   return NextResponse.json({
-    monthly: Array.from(monthlyStats.values()).sort((a, b) => a.month.localeCompare(b.month)),
+    monthly: Array.from(monthlyStats.values()).sort((a, b) =>
+      a.month.localeCompare(b.month)
+    ),
     topRestaurants,
     totalOrders: (orders || []).length,
   })
@@ -1257,13 +1310,17 @@ export function StatsDashboard() {
 Create `app/stats/layout.tsx`:
 
 ```typescript
-import type { Metadata } from 'next'
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: '統計 | Bento',
+  title: "統計 | Bento",
 }
 
-export default function StatsLayout({ children }: { children: React.ReactNode }) {
+export default function StatsLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return children
 }
 ```
@@ -1283,7 +1340,7 @@ export default function StatsPage() {
 In `components/header-bar.tsx`, add after the 排名 link:
 
 ```tsx
-<Link href="/stats" className="font-semibold text-lg">
+<Link href="/stats" className="text-lg font-semibold">
   統計
 </Link>
 ```
@@ -1306,6 +1363,7 @@ git commit -m "feat: add order history & statistics dashboard page"
 ### Task 9B: Supabase Realtime notifications
 
 **Files:**
+
 - Create: `components/realtime-notifications.tsx`
 - Modify: `app/layout.tsx`
 
@@ -1316,11 +1374,11 @@ Create `components/realtime-notifications.tsx`:
 ```typescript
 "use client"
 
-import { useAuth } from '@/contexts/auth-context'
-import { createClient } from '@/lib/supabase/client'
-import { clearCache } from '@/lib/utils/cache'
-import { useEffect } from 'react'
-import { toast } from 'sonner'
+import { useAuth } from "@/contexts/auth-context"
+import { createClient } from "@/lib/supabase/client"
+import { clearCache } from "@/lib/utils/cache"
+import { useEffect } from "react"
+import { toast } from "sonner"
 
 export function RealtimeNotifications() {
   const { user } = useAuth()
@@ -1331,55 +1389,55 @@ export function RealtimeNotifications() {
     const supabase = createClient()
 
     const channel = supabase
-      .channel('bento-notifications')
+      .channel("bento-notifications")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'bento_orders',
-          filter: 'status=eq.closed',
+          event: "UPDATE",
+          schema: "public",
+          table: "bento_orders",
+          filter: "status=eq.closed",
         },
         (payload) => {
-          toast.info('訂單已關閉', {
+          toast.info("訂單已關閉", {
             description: `訂單 ${payload.new.id} 已被關閉`,
           })
-          clearCache('orders')
+          clearCache("orders")
           clearCache(`order_${payload.new.id}`)
-          window.dispatchEvent(new CustomEvent('order-updated'))
+          window.dispatchEvent(new CustomEvent("order-updated"))
         }
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bento_orders',
+          event: "INSERT",
+          schema: "public",
+          table: "bento_orders",
         },
         (payload) => {
-          toast.info('新訂單', {
+          toast.info("新訂單", {
             description: `有新的訂單已建立`,
           })
-          clearCache('orders')
-          window.dispatchEvent(new CustomEvent('order-updated'))
+          clearCache("orders")
+          window.dispatchEvent(new CustomEvent("order-updated"))
         }
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bento_order_items',
+          event: "INSERT",
+          schema: "public",
+          table: "bento_order_items",
         },
         (payload) => {
           // Only notify if it's not the current user's action
           if (payload.new.user_id !== user.id) {
-            toast.info('新的訂餐', {
-              description: '有人新增了訂餐項目',
+            toast.info("新的訂餐", {
+              description: "有人新增了訂餐項目",
             })
             clearCache(`order_${payload.new.order_id}`)
             window.dispatchEvent(
-              new CustomEvent('order-updated', {
+              new CustomEvent("order-updated", {
                 detail: { orderId: payload.new.order_id },
               })
             )
@@ -1427,15 +1485,15 @@ git commit -m "feat: add Supabase Realtime notifications for order updates"
 
 ## Summary of Commits
 
-| # | Commit | Category |
-|---|--------|----------|
-| 1 | Security headers, Zod validation, middleware, shared types, auth checks | Security |
-| 2 | Extract useAdminCheck hook, shared types, parseOrderDate utility | Architecture |
-| 3 | Clear localStorage cache on logout, remove `any` from cache | Architecture |
-| 4 | Toast notifications, confirm dialogs, loading skeletons | UX |
-| 5 | Replace dynamic imports, add page metadata | Performance |
-| 6 | Dark mode toggle button | Feature |
-| 7 | Search bar for restaurant list | Feature |
-| 8 | PWA manifest | Feature |
-| 9a | Stats dashboard page | Feature |
-| 9b | Supabase Realtime notifications | Feature |
+| #   | Commit                                                                  | Category     |
+| --- | ----------------------------------------------------------------------- | ------------ |
+| 1   | Security headers, Zod validation, middleware, shared types, auth checks | Security     |
+| 2   | Extract useAdminCheck hook, shared types, parseOrderDate utility        | Architecture |
+| 3   | Clear localStorage cache on logout, remove `any` from cache             | Architecture |
+| 4   | Toast notifications, confirm dialogs, loading skeletons                 | UX           |
+| 5   | Replace dynamic imports, add page metadata                              | Performance  |
+| 6   | Dark mode toggle button                                                 | Feature      |
+| 7   | Search bar for restaurant list                                          | Feature      |
+| 8   | PWA manifest                                                            | Feature      |
+| 9a  | Stats dashboard page                                                    | Feature      |
+| 9b  | Supabase Realtime notifications                                         | Feature      |

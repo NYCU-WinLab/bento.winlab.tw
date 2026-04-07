@@ -1,143 +1,86 @@
-"use client";
+"use client"
 
-import { clearSupabaseCookies } from "@/lib/clear-cookies";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 import {
   createContext,
   useContext,
   useEffect,
   useState,
   type ReactNode,
-} from "react";
+} from "react"
 
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  refreshUser: () => Promise<void>;
+  user: User | null
+  loading: boolean
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   refreshUser: async () => {},
-});
+})
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [supabase] = useState(() => createClient());
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [supabase] = useState(() => createClient())
 
   const refreshUser = async () => {
     try {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-    } catch (error) {
-      console.error("Error refreshing user:", error);
-      setUser(null);
+      } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+    } catch {
+      setUser(null)
     }
-  };
-
-  const isCookieError = (error: unknown): boolean => {
-    const message = (error as { message?: string })?.message || "";
-    return (
-      message.includes("Invalid") ||
-      message.includes("corrupt") ||
-      message.includes("malformed") ||
-      message.includes("UTF-8") ||
-      message.includes("utf-8")
-    );
-  };
+  }
 
   useEffect(() => {
-    let mounted = true;
+    let mounted = true
 
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error("Error getting session:", error);
-
-          if (error.message.includes("429") || error.message.includes("rate")) {
-            console.warn("Rate limit detected - waiting before retry");
-            return;
-          }
-
-          if (isCookieError(error)) {
-            console.log("Clearing corrupted cookies");
-            clearSupabaseCookies();
-          }
-        }
-
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
         if (mounted) {
-          setUser(session?.user ?? null);
+          setUser(session?.user ?? null)
+          setLoading(false)
         }
-      } catch (error) {
-        console.error("Failed to initialize auth:", error);
-
-        if (isCookieError(error)) {
-          console.log("Clearing corrupted cookies");
-          clearSupabaseCookies();
-        }
-
+      })
+      .catch(() => {
         if (mounted) {
-          setUser(null);
+          setUser(null)
+          setLoading(false)
         }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    initializeAuth();
+      })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
-
-      if (event === "TOKEN_REFRESHED") {
-        console.log("Token refreshed successfully");
-      }
-
-      if (event === "SIGNED_OUT") {
-        console.log("User signed out - clearing cookies");
-        clearSupabaseCookies();
-      }
-
-      if (event === "SIGNED_IN") {
-        console.log("User signed in");
-      }
-
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) {
-        setUser(session?.user ?? null);
+        setUser(session?.user ?? null)
       }
-    });
+    })
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   return (
     <AuthContext.Provider value={{ user, loading, refreshUser }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
-};
+  return context
+}

@@ -1,4 +1,4 @@
-import { OrderDetail } from '@/components/order-detail'
+import { OrderDetail } from "@/components/orders/order-detail"
 
 export default async function OrderDetailPage({
   params,

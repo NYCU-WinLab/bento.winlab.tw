@@ -18,44 +18,72 @@ Bento is an ordering system for NYCU WinLab (https://bento.winlab.tw). The UI is
 - **Framework**: Next.js 16 with App Router, React 19, TypeScript
 - **Package manager**: Bun
 - **Styling**: Tailwind CSS v4 (OKLCH color space, CSS variables, dark mode via `.dark` class)
-- **UI components**: Shadcn/ui (new-york style, zinc base color) in `components/ui/`
+- **UI components**: Shadcn/ui (radix-luma style, neutral base color) in `components/ui/`
 - **Database & Auth**: Supabase (SSR cookies, Keycloak primary + Google OAuth fallback)
-- **AI**: OpenAI API (GPT vision for menu image parsing)
+- **Data fetching**: TanStack Query v5
 - **Path alias**: `@/*` maps to project root
 
 ## Architecture
 
 ### Data flow
+
 - Browser Supabase client: `lib/supabase/client.ts`
 - Server Supabase client: `lib/supabase/server.ts`
-- Auth middleware proxy: `lib/supabase/proxy.ts`
-- Auth context provider: `contexts/auth-context.tsx`
-- API routes in `app/api/` handle authorization and Supabase queries server-side
+- Auth proxy: `lib/supabase/proxy.ts`
+- Auth context provider: `contexts/auth-context.tsx` — provides user state
+- All CRUD goes through direct Supabase client calls in TanStack Query hooks (`hooks/`)
+- Only one API route remains: `/api/auth/callback` (OAuth)
 
 ### Client-side caching
-Uses a custom SWR (stale-while-revalidate) pattern via `lib/hooks/use-cached-fetch.ts` backed by localStorage (`lib/utils/cache.ts`).
 
-### Admin checks
-- Server-side: `lib/utils/admin.ts` (`requireAdmin()`)
-- Client-side: `lib/utils/admin-client.ts` (`isAdmin()`)
-- Checks `user_profiles.roles.bento` array in Supabase
+TanStack Query v5 handles all caching, refetching, and optimistic updates. Query key factory in `hooks/query-keys.ts`.
+
+### Hooks (`hooks/`)
+
+- `use-orders` — order list, detail, create, close, delete
+- `use-order-items` — add item, admin add, anonymous add, delete item
+- `use-menus` — menu list, detail, stats, create, update, delete
+- `use-ratings` — ratings by item, user rating, submit rating
+- `use-stats` — global stats, rankings, personal stats
+- `use-users` — user list (admin)
+- `use-admin` — admin role check
+- `use-realtime` — Supabase realtime subscriptions → TanStack Query invalidation
+
+### Components (`components/`)
+
+Organized by domain:
+
+- `orders/` — order list, detail, items, creation
+- `menus/` — menu list, detail, editor, item management
+- `rankings/` — leaderboard views
+- `stats/` — charts and statistics
+- `layout/` — nav, sidebar, header
+- `shared/` — reusable cross-domain components
+- `providers/` — QueryProvider wrapper
+- `ui/` — shadcn/ui primitives
+
+### Shared utils
+
+- `lib/utils/menu.ts` — `groupMenuItems()` for grouping menu items by type
+
+### Authorization
+
+- DB-level RLS with `has_role()` function — no application-level admin checks
+- `hooks/use-admin.ts` checks role for UI gating only
+
+### Realtime
+
+`hooks/use-realtime.ts` subscribes to Supabase realtime channels and invalidates TanStack Query caches on changes.
 
 ### Database tables (Supabase)
-`bento_orders`, `bento_menu_items`, `bento_menus`, `bento_order_items`, `bento_ratings`, `user_profiles`
 
-### Key API routes
-- `/api/orders` — order CRUD + `/api/orders/[id]/close`
-- `/api/menus` — restaurant/menu CRUD + `/api/menus/[id]/stats`
-- `/api/order-items` — order item management
-- `/api/ratings` — user ratings
-- `/api/menu/parse` — OpenAI menu image parsing
-- `/api/auth/callback` — OAuth callback handler
+`bento_orders`, `bento_menu_items`, `bento_menus`, `bento_order_items`, `bento_ratings`, `user_profiles`
 
 ## Environment Variables
 
 Copy `.env.example` to `.env`. Required:
+
 - `NEXT_PUBLIC_SITE_URL` — app URL (http://localhost:3000 for dev)
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` — Supabase anon key
-- `OPENAI_API_KEY` — for menu parsing feature
 - `SUPABASE_SECRET_KEY` — server-only service role key (not in .env.example)

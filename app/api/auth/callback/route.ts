@@ -1,29 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server"
+import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const rawNext = requestUrl.searchParams.get("next") || "/";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const { searchParams, origin } = new URL(request.url)
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get("code")
+  const rawNext = requestUrl.searchParams.get("next") || "/"
+  const next =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/"
 
   try {
     if (code) {
-      const supabase = await createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const supabase = await createClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (error) {
-        console.error("Error exchanging code for session:", error);
+        console.error("Error exchanging code for session:", error)
         // Redirect to home with error parameter
-        return NextResponse.redirect(`${origin}/?error=auth_error`);
+        return NextResponse.redirect(`${origin}/?error=auth_error`)
       }
     }
 
     // Redirect to the 'next' URL if provided, otherwise go to home
-    return NextResponse.redirect(`${origin}${next}`);
+    return NextResponse.redirect(`${origin}${next}`)
   } catch (error) {
-    console.error("Auth callback error:", error);
+    console.error("Auth callback error:", error)
 
     // If it's a corrupted cookie error, clear cookies and redirect
     if (
@@ -33,31 +34,34 @@ export async function GET(request: Request) {
     ) {
       const response = NextResponse.redirect(
         `${origin}/?error=corrupted_session`
-      );
+      )
 
       // Clear all Supabase auth cookies (derive prefix from env)
-      const supabaseProjectId = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
-        /\/\/([^.]+)\./
-      )?.[1] || ''
+      const supabaseProjectId =
+        process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/\/\/([^.]+)\./)?.[1] || ""
       const cookiePrefix = `sb-${supabaseProjectId}-auth-token`
-      const cookieNames = [cookiePrefix, `${cookiePrefix}.0`, `${cookiePrefix}.1`];
+      const cookieNames = [
+        cookiePrefix,
+        `${cookiePrefix}.0`,
+        `${cookiePrefix}.1`,
+      ]
 
       cookieNames.forEach((name) => {
         response.cookies.set(name, "", {
           maxAge: 0,
           path: "/",
           domain: ".winlab.tw",
-        });
+        })
         response.cookies.set(name, "", {
           maxAge: 0,
           path: "/",
-        });
-      });
+        })
+      })
 
-      return response;
+      return response
     }
 
     // For other errors, just redirect to home
-    return NextResponse.redirect(`${origin}/?error=unknown`);
+    return NextResponse.redirect(`${origin}/?error=unknown`)
   }
 }

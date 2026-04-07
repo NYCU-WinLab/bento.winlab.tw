@@ -1,33 +1,33 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useState } from "react";
+} from "@/components/ui/card"
+import { createClient } from "@/lib/supabase/client"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { Suspense, useCallback, useState } from "react"
 
 function LoginForm() {
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/";
-  const [loading, setLoading] = useState<"keycloak" | "google" | null>(null);
+  const searchParams = useSearchParams()
+  const next = searchParams.get("next") || "/"
+  const [loading, setLoading] = useState<"keycloak" | "google" | null>(null)
 
-  const supabase = createClient();
+  const supabase = createClient()
 
   const handleLogin = useCallback(
     async (provider: "google" | "keycloak") => {
-      setLoading(provider);
+      setLoading(provider)
       try {
-        const origin = window.location.origin;
+        const origin = window.location.origin
         const redirectTo =
           `${origin}/api/auth/callback` +
-          (next && next !== "/" ? `?next=${encodeURIComponent(next)}` : "");
+          (next && next !== "/" ? `?next=${encodeURIComponent(next)}` : "")
 
         await supabase.auth.signInWithOAuth({
           provider,
@@ -35,14 +35,14 @@ function LoginForm() {
             redirectTo,
             scopes: provider === "keycloak" ? "openid" : undefined,
           },
-        });
+        })
       } catch (error) {
-        console.error("Login error:", error);
-        setLoading(null);
+        console.error("Login error:", error)
+        setLoading(null)
       }
     },
     [next]
-  );
+  )
 
   return (
     <Card className="w-full max-w-sm border-border/80 bg-card/95 shadow-lg backdrop-blur-sm">
@@ -74,13 +74,16 @@ function LoginForm() {
           {loading === "google" ? "導向 Google…" : "使用 Google 登入"}
         </Button>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
+          <Link
+            href="/"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
             返回首頁
           </Link>
         </p>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 function LoginFormFallback() {
@@ -95,16 +98,19 @@ function LoginFormFallback() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <div className="h-9 w-full rounded-md bg-muted animate-pulse" />
-        <div className="h-9 w-full rounded-md bg-muted animate-pulse" />
+        <div className="h-9 w-full animate-pulse rounded-md bg-muted" />
+        <div className="h-9 w-full animate-pulse rounded-md bg-muted" />
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
+          <Link
+            href="/"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
             返回首頁
           </Link>
         </p>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export default function LoginPage() {
@@ -114,5 +120,5 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
     </div>
-  );
+  )
 }
