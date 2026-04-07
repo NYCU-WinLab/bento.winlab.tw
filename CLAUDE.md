@@ -21,7 +21,6 @@ Bento is an ordering system for NYCU WinLab (https://bento.winlab.tw). The UI is
 - **UI components**: Shadcn/ui (new-york style, zinc base color) in `components/ui/`
 - **Database & Auth**: Supabase (SSR cookies, Keycloak primary + Google OAuth fallback)
 - **Data fetching**: TanStack Query v5
-- **AI**: OpenAI API (GPT vision for menu image parsing)
 - **Path alias**: `@/*` maps to project root
 
 ## Architecture
@@ -32,7 +31,7 @@ Bento is an ordering system for NYCU WinLab (https://bento.winlab.tw). The UI is
 - Auth proxy: `lib/supabase/proxy.ts`
 - Auth context provider: `contexts/auth-context.tsx` — provides user state
 - All CRUD goes through direct Supabase client calls in TanStack Query hooks (`hooks/`)
-- Only two API routes remain: `/api/auth/callback` (OAuth) and `/api/menu/parse` (OpenAI)
+- Only one API route remains: `/api/auth/callback` (OAuth)
 
 ### Client-side caching
 TanStack Query v5 handles all caching, refetching, and optimistic updates. Query key factory in `hooks/query-keys.ts`.
@@ -77,5 +76,4 @@ Copy `.env.example` to `.env`. Required:
 - `NEXT_PUBLIC_SITE_URL` — app URL (http://localhost:3000 for dev)
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` — Supabase anon key
-- `OPENAI_API_KEY` — for menu parsing feature
 - `SUPABASE_SECRET_KEY` — server-only service role key (not in .env.example)

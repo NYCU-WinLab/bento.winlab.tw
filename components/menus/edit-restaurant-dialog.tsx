@@ -3,8 +3,6 @@
 import { useUpdateMenu } from "@/hooks/use-menus";
 import { Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
-import { MenuImageUpload } from "./menu-image-upload";
-import { MenuParser } from "./menu-parser";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -176,34 +174,6 @@ export function EditRestaurantDialog({
                 onChange={(e) => setPhone(e.target.value)}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label>重新上傳菜單圖片（選填）</Label>
-              <MenuImageUpload
-                onParseComplete={(items) => {
-                  const sortedItems = [...items]
-                    .map((item) => ({
-                      name: item.name,
-                      price: String(item.price),
-                      type: item.type,
-                    }))
-                    .sort((a, b) => {
-                      if (a.type && b.type && a.type !== b.type) {
-                        return a.type.localeCompare(b.type);
-                      }
-                      if (a.type && !b.type) return -1;
-                      if (!a.type && b.type) return 1;
-                      const priceA = parseFloat(a.price) || 0;
-                      const priceB = parseFloat(b.price) || 0;
-                      return priceA - priceB;
-                    });
-                  setMenuItems(sortedItems);
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>菜單項目（可編輯）</Label>
-              <MenuParser items={menuItems} onChange={setMenuItems} />
             </div>
             <div className="space-y-2">
               <Label>自訂選項（如：辣度、醬汁等）</Label>

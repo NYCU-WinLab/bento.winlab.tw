@@ -2,8 +2,6 @@
 
 import { useCreateMenu } from "@/hooks/use-menus";
 import { useState } from "react";
-import { MenuImageUpload } from "./menu-image-upload";
-import { MenuParser } from "./menu-parser";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -106,35 +104,6 @@ export function CreateRestaurantDialog({
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label>菜單圖片</Label>
-              <MenuImageUpload
-                onParseComplete={(items) => {
-                  const formattedItems = items.map(item => ({
-                    name: item.name,
-                    price: String(item.price),
-                    type: item.type || undefined,
-                  }));
-                  const sortedItems = [...formattedItems].sort((a, b) => {
-                    if (a.type && b.type && a.type !== b.type) {
-                      return a.type.localeCompare(b.type);
-                    }
-                    if (a.type && !b.type) return -1;
-                    if (!a.type && b.type) return 1;
-                    const priceA = parseFloat(a.price) || 0;
-                    const priceB = parseFloat(b.price) || 0;
-                    return priceA - priceB;
-                  });
-                  setMenuItems(sortedItems);
-                }}
-              />
-            </div>
-            {menuItems.length > 0 && (
-              <div className="space-y-2">
-                <Label>解析結果（可編輯）</Label>
-                <MenuParser items={menuItems} onChange={setMenuItems} />
-              </div>
-            )}
             <div className="space-y-2">
               <Label>自訂選項（如：辣度、醬汁等）</Label>
               <div className="space-y-2">
