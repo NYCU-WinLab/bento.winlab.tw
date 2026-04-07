@@ -5,8 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-geist-sans);
-  --font-sans: var(--font-geist-sans);
+  --font-heading:
+    var(--font-geist-sans), "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    sans-serif;
+  --font-sans:
+    var(--font-geist-sans), "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    sans-serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -140,9 +144,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
+    @apply bg-background font-sans text-foreground;
   }
 }

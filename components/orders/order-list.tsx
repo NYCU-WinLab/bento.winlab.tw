@@ -13,10 +13,10 @@ export function OrderList() {
   if (isLoading && !orders) {
     return (
       <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
-        <Skeleton className="mx-2 h-8 w-24" />
+        <Skeleton className="mx-2 h-8 w-24 rounded-md" />
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            <Skeleton key={i} className="h-[88px] w-full rounded-xl" />
           ))}
         </div>
       </div>

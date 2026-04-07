@@ -16,7 +16,7 @@ export function UserTotalSpending({ value, loading }: UserTotalSpendingProps) {
           <CardTitle>總計消費</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-12 w-32" />
+          <Skeleton className="h-10 w-32 rounded-md" />
         </CardContent>
       </Card>
     )

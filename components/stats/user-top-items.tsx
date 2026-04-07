@@ -23,7 +23,7 @@ export function UserTopItems({ data, loading }: UserTopItemsProps) {
         <CardContent>
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-4 w-full" />
+              <Skeleton key={i} className="h-6 w-full rounded-md" />
             ))}
           </div>
         </CardContent>

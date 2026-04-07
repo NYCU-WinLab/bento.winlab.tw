@@ -15,14 +15,14 @@ export function OrderDetail({ orderId }: { orderId: string }) {
   if (!order) {
     return (
       <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
-        <div className="mx-2 space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-6 w-32" />
+        <div className="mx-2 space-y-3">
+          <Skeleton className="h-8 w-48 rounded-md" />
+          <Skeleton className="h-5 w-32 rounded-md" />
         </div>
         <div className="space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
         </div>
       </div>
     )

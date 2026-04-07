@@ -16,7 +16,7 @@ export function UserOrderCount({ value, loading }: UserOrderCountProps) {
           <CardTitle>參與訂單數</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-12 w-20" />
+          <Skeleton className="h-10 w-20 rounded-md" />
         </CardContent>
       </Card>
     )
