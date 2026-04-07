@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { TopRankingCard } from "./top-ranking-card";
+import { TopRankingCard } from "./top-ranking-card"
 
 interface TopParticipantGroup {
-  value: number;
+  value: number
   users: Array<{
-    userId: string;
-    userName: string;
-    avatarUrl: string | null;
-  }>;
+    userId: string
+    userName: string
+    avatarUrl: string | null
+  }>
 }
 
 interface TopParticipantsProps {
-  data: TopParticipantGroup[];
-  loading?: boolean;
+  data: TopParticipantGroup[]
+  loading?: boolean
 }
 
 export function TopParticipants({ data, loading }: TopParticipantsProps) {
@@ -24,5 +24,5 @@ export function TopParticipants({ data, loading }: TopParticipantsProps) {
       loading={loading}
       formatValue={(v) => `${v} 次`}
     />
-  );
+  )
 }

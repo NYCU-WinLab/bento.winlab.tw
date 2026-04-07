@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { useAuth } from "@/contexts/auth-context";
-import { useMenus } from "@/hooks/use-menus";
-import { useCreateOrder } from "@/hooks/use-orders";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context"
+import { useMenus } from "@/hooks/use-menus"
+import { useCreateOrder } from "@/hooks/use-orders"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -13,58 +13,58 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 
 export function CreateOrderDialog({
   onSuccess,
   trigger,
 }: {
-  onSuccess: () => void;
-  trigger?: React.ReactNode;
+  onSuccess: () => void
+  trigger?: React.ReactNode
 }) {
-  const [open, setOpen] = useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] = useState("");
+  const [open, setOpen] = useState(false)
+  const [selectedRestaurant, setSelectedRestaurant] = useState("")
   const [orderDate, setOrderDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
-  const { user } = useAuth();
-  const { data: restaurants } = useMenus();
-  const createOrder = useCreateOrder();
+    const today = new Date()
+    return today.toISOString().split("T")[0]
+  })
+  const { user } = useAuth()
+  const { data: restaurants } = useMenus()
+  const createOrder = useCreateOrder()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRestaurant || !orderDate || !user) return;
+    e.preventDefault()
+    if (!selectedRestaurant || !orderDate || !user) return
 
     try {
       await createOrder.mutateAsync({
         p_restaurant_id: selectedRestaurant,
         p_order_date: orderDate,
-      });
+      })
 
-      setOpen(false);
-      setSelectedRestaurant("");
+      setOpen(false)
+      setSelectedRestaurant("")
       setOrderDate(() => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
-      });
-      onSuccess();
+        const today = new Date()
+        return today.toISOString().split("T")[0]
+      })
+      onSuccess()
     } catch (error) {
       const err =
-        error instanceof Error ? error : new Error("Failed to create order");
-      console.error("Error creating order:", err);
-      alert(`建立訂單失敗: ${err.message}`);
+        error instanceof Error ? error : new Error("Failed to create order")
+      console.error("Error creating order:", err)
+      alert(`建立訂單失敗: ${err.message}`)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -117,7 +117,9 @@ export function CreateOrderDialog({
             </Button>
             <Button
               type="submit"
-              disabled={createOrder.isPending || !selectedRestaurant || !orderDate}
+              disabled={
+                createOrder.isPending || !selectedRestaurant || !orderDate
+              }
             >
               {createOrder.isPending ? "建立中..." : "建立"}
             </Button>
@@ -125,5 +127,5 @@ export function CreateOrderDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

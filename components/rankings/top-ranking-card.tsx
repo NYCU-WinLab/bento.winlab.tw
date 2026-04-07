@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface RankingGroup {
-  value: number;
+  value: number
   users: Array<{
-    userId: string;
-    userName: string;
-    avatarUrl: string | null;
-  }>;
+    userId: string
+    userName: string
+    avatarUrl: string | null
+  }>
 }
 
 interface TopRankingCardProps {
-  title: string;
-  data: RankingGroup[];
-  loading?: boolean;
-  formatValue: (value: number) => string;
+  title: string
+  data: RankingGroup[]
+  loading?: boolean
+  formatValue: (value: number) => string
 }
 
 const rankStyles = {
@@ -40,29 +40,34 @@ const rankStyles = {
     glow: "shadow-[0_0_10px_rgba(217,119,6,0.3)]",
     scale: 1.01,
   },
-} as const;
+} as const
 
-export function TopRankingCard({ title, data, loading, formatValue }: TopRankingCardProps) {
-  const [currentUserIndices, setCurrentUserIndices] = useState<number[]>([]);
+export function TopRankingCard({
+  title,
+  data,
+  loading,
+  formatValue,
+}: TopRankingCardProps) {
+  const [currentUserIndices, setCurrentUserIndices] = useState<number[]>([])
 
   useEffect(() => {
-    if (data.length === 0) return;
-    setCurrentUserIndices(data.map(() => 0));
+    if (data.length === 0) return
+    setCurrentUserIndices(data.map(() => 0))
 
     const interval = setInterval(() => {
       setCurrentUserIndices((prev) =>
         prev.map((currentIndex, groupIndex) => {
-          const group = data[groupIndex];
+          const group = data[groupIndex]
           if (group && group.users.length > 1) {
-            return (currentIndex + 1) % group.users.length;
+            return (currentIndex + 1) % group.users.length
           }
-          return currentIndex;
+          return currentIndex
         })
-      );
-    }, 3000);
+      )
+    }, 3000)
 
-    return () => clearInterval(interval);
-  }, [data]);
+    return () => clearInterval(interval)
+  }, [data])
 
   if (loading) {
     return (
@@ -73,18 +78,18 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-8 h-8 rounded-full bg-muted" />
+              <div key={i} className="flex animate-pulse items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-muted" />
                 <div className="flex-1">
-                  <div className="h-4 bg-muted rounded w-24" />
+                  <div className="h-4 w-24 rounded bg-muted" />
                 </div>
-                <div className="h-4 bg-muted rounded w-16" />
+                <div className="h-4 w-16 rounded bg-muted" />
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -96,33 +101,29 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
         {data.length > 0 ? (
           <div className="space-y-3">
             {data.map((group, index) => {
-              const rank = index + 1;
-              const isTopThree = rank <= 3;
-              const currentUserIndex = currentUserIndices[index] || 0;
+              const rank = index + 1
+              const isTopThree = rank <= 3
+              const currentUserIndex = currentUserIndices[index] || 0
               const currentUser =
-                group.users[currentUserIndex] || group.users[0];
-              const hasMultipleUsers = group.users.length > 1;
-              const style = isTopThree ? rankStyles[rank as 1 | 2 | 3] : null;
+                group.users[currentUserIndex] || group.users[0]
+              const hasMultipleUsers = group.users.length > 1
+              const style = isTopThree ? rankStyles[rank as 1 | 2 | 3] : null
 
               return (
                 <div
                   key={`${group.users[0]?.userId ?? index}-${rank}`}
-                  className={`flex items-center gap-3 p-2 rounded-lg transition-all ${
+                  className={`flex items-center gap-3 rounded-lg p-2 transition-all ${
                     style?.glow || ""
                   } ${isTopThree ? "bg-background/50" : ""}`}
                 >
                   <motion.div
-                    animate={
-                      style
-                        ? { scale: [1, style.scale, 1] }
-                        : {}
-                    }
+                    animate={style ? { scale: [1, style.scale, 1] } : {}}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
                       style?.badge || "bg-primary/10 text-primary"
                     }`}
                   >
@@ -136,7 +137,7 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
                       group.users.slice(0, 3).map((user) => (
                         <Avatar
                           key={user.userId}
-                          className="w-8 h-8 ring-2 ring-background"
+                          className="h-8 w-8 ring-2 ring-background"
                         >
                           <AvatarImage
                             src={user.avatarUrl ?? undefined}
@@ -148,7 +149,7 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
                         </Avatar>
                       ))
                     ) : (
-                      <Avatar className="w-8 h-8">
+                      <Avatar className="h-8 w-8">
                         <AvatarImage
                           src={currentUser.avatarUrl ?? undefined}
                           alt={currentUser.userName}
@@ -160,7 +161,7 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0 relative h-6 overflow-hidden">
+                  <div className="relative h-6 min-w-0 flex-1 overflow-hidden">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={currentUser.userId}
@@ -170,18 +171,18 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
                         transition={{ duration: 0.6, ease: "easeInOut" }}
                         className="absolute inset-0 flex items-center"
                       >
-                        <p className="font-medium truncate">
+                        <p className="truncate font-medium">
                           {currentUser.userName}
                         </p>
                       </motion.div>
                     </AnimatePresence>
                   </div>
 
-                  <p className="font-bold text-lg">
+                  <p className="text-lg font-bold">
                     {formatValue(group.value)}
                   </p>
                 </div>
-              );
+              )
             })}
           </div>
         ) : (
@@ -189,5 +190,5 @@ export function TopRankingCard({ title, data, loading, formatValue }: TopRanking
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

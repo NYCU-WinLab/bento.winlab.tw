@@ -1,50 +1,50 @@
-"use client";
+"use client"
 
-import { useAuth } from "@/contexts/auth-context";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/auth-context"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type Identity = {
-  id: string;
-  provider: string;
+  id: string
+  provider: string
   identity_data?: {
-    email?: string;
-    name?: string;
-    avatar_url?: string;
-  };
-};
+    email?: string
+    name?: string
+    avatar_url?: string
+  }
+}
 
 export function UserProfile() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-  const [identities, setIdentities] = useState<Identity[]>([]);
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
+  const [identities, setIdentities] = useState<Identity[]>([])
 
   useEffect(() => {
     if (user) {
       // Get current identities from user object
-      const userIdentities = (user.identities || []) as Identity[];
-      setIdentities(userIdentities);
+      const userIdentities = (user.identities || []) as Identity[]
+      setIdentities(userIdentities)
     }
-  }, [user]);
+  }, [user])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
+    await supabase.auth.signOut()
+    router.push("/")
+  }
 
   const getProviderDisplayName = (provider: string) => {
     const names: Record<string, string> = {
       google: "Google",
       keycloak: "Keycloak",
       email: "Email",
-    };
-    return names[provider] || provider;
-  };
+    }
+    return names[provider] || provider
+  }
 
   if (!user) {
     return (
@@ -53,7 +53,7 @@ export function UserProfile() {
           <p className="text-center text-muted-foreground">請先登入</p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -63,7 +63,7 @@ export function UserProfile() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center gap-4">
-          <Avatar className="w-16 h-16">
+          <Avatar className="h-16 w-16">
             <AvatarImage
               src={user.user_metadata?.avatar_url}
               alt={user.email}
@@ -73,7 +73,7 @@ export function UserProfile() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold text-lg">
+            <p className="text-lg font-semibold">
               {user.user_metadata?.name || user.email}
             </p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -117,5 +117,5 @@ export function UserProfile() {
         </Button>
       </CardContent>
     </Card>
-  );
+  )
 }

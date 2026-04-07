@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface UserOrderCountProps {
   value: number
@@ -16,7 +16,7 @@ export function UserOrderCount({ value, loading }: UserOrderCountProps) {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse">
-            <div className="h-12 bg-muted rounded" />
+            <div className="h-12 rounded bg-muted" />
           </div>
         </CardContent>
       </Card>

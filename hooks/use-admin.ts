@@ -14,19 +14,20 @@ export function useAdmin() {
     queryFn: async () => {
       if (!user) return null
       const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('roles')
-        .eq('id', user.id)
+        .from("user_profiles")
+        .select("roles")
+        .eq("id", user.id)
         .single()
       return profile
     },
     enabled: !!user,
   })
 
-  const isAdmin = !!data?.roles &&
-    typeof data.roles === 'object' &&
+  const isAdmin =
+    !!data?.roles &&
+    typeof data.roles === "object" &&
     Array.isArray((data.roles as Record<string, string[]>).bento) &&
-    (data.roles as Record<string, string[]>).bento.includes('admin')
+    (data.roles as Record<string, string[]>).bento.includes("admin")
 
   return { isAdmin, isLoading }
 }

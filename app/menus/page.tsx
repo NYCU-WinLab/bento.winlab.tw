@@ -1,6 +1,5 @@
-import { RestaurantList } from '@/components/menus/restaurant-list'
+import { RestaurantList } from "@/components/menus/restaurant-list"
 
 export default function RestaurantPage() {
   return <RestaurantList />
 }
-

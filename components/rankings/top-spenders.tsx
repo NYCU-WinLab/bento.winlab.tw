@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { TopRankingCard } from "./top-ranking-card";
+import { TopRankingCard } from "./top-ranking-card"
 
 interface TopSpenderGroup {
-  value: number;
+  value: number
   users: Array<{
-    userId: string;
-    userName: string;
-    avatarUrl: string | null;
-  }>;
+    userId: string
+    userName: string
+    avatarUrl: string | null
+  }>
 }
 
 interface TopSpendersProps {
-  data: TopSpenderGroup[];
-  loading?: boolean;
+  data: TopSpenderGroup[]
+  loading?: boolean
 }
 
 export function TopSpenders({ data, loading }: TopSpendersProps) {
@@ -24,5 +24,5 @@ export function TopSpenders({ data, loading }: TopSpendersProps) {
       loading={loading}
       formatValue={(v) => `NT$ ${v.toLocaleString()}`}
     />
-  );
+  )
 }

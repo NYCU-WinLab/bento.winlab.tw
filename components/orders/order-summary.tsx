@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Card } from '@/components/ui/card'
+import { Card } from "@/components/ui/card"
 
 interface OrderItem {
   id: string
@@ -25,19 +25,20 @@ export function OrderSummary({ order }: { order: Order }) {
   )
 
   return (
-    <Card className="p-6 mb-6">
-      <h2 className="text-2xl font-semibold mb-4">總覽</h2>
+    <Card className="mb-6 p-6">
+      <h2 className="mb-4 text-2xl font-semibold">總覽</h2>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">品項總計</p>
+          <p className="mb-1 text-sm text-muted-foreground">品項總計</p>
           <p className="text-2xl font-bold">{totalItems}</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">金額總計</p>
-          <p className="text-2xl font-bold">NT$ {totalAmount.toLocaleString()}</p>
+          <p className="mb-1 text-sm text-muted-foreground">金額總計</p>
+          <p className="text-2xl font-bold">
+            NT$ {totalAmount.toLocaleString()}
+          </p>
         </div>
       </div>
     </Card>
   )
 }
-

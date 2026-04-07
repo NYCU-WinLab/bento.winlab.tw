@@ -17,25 +17,28 @@ export function useGlobalStats() {
     queryKey: queryKeys.stats.global,
     queryFn: async () => {
       const { data: orders, error } = await supabase
-        .from('bento_orders')
+        .from("bento_orders")
         .select(
-          'id, restaurant_id, status, created_at, closed_at, restaurants:bento_menus(name), order_items:bento_order_items(user_id, menu_items:bento_menu_items(price))'
+          "id, restaurant_id, status, created_at, closed_at, restaurants:bento_menus(name), order_items:bento_order_items(user_id, menu_items:bento_menu_items(price))"
         )
-        .eq('status', 'closed')
-        .order('created_at', { ascending: false })
+        .eq("status", "closed")
+        .order("created_at", { ascending: false })
 
       if (error) throw error
 
-      const monthlyStats = new Map<string, {
-        month: string
-        totalOrders: number
-        totalSpending: number
-        totalParticipants: number
-      }>()
+      const monthlyStats = new Map<
+        string,
+        {
+          month: string
+          totalOrders: number
+          totalSpending: number
+          totalParticipants: number
+        }
+      >()
 
       for (const order of orders || []) {
         const date = new Date(order.created_at)
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
 
         if (!monthlyStats.has(monthKey)) {
           monthlyStats.set(monthKey, {
@@ -62,7 +65,7 @@ export function useGlobalStats() {
       const restaurantFreq = new Map<string, { name: string; count: number }>()
       for (const order of orders || []) {
         const restaurant = unwrapRelation(order.restaurants)
-        const name = restaurant?.name || '未知'
+        const name = restaurant?.name || "未知"
         const existing = restaurantFreq.get(name) || { name, count: 0 }
         existing.count += 1
         restaurantFreq.set(name, existing)
@@ -90,9 +93,9 @@ export function useRankings() {
     queryKey: queryKeys.stats.rankings,
     queryFn: async () => {
       const { data: orderItems, error } = await supabase
-        .from('bento_order_items')
+        .from("bento_order_items")
         .select(
-          'user_id, menu_item_id, order_id, menu_items:bento_menu_items(price, name)'
+          "user_id, menu_item_id, order_id, menu_items:bento_menu_items(price, name)"
         )
 
       if (error) throw error
@@ -102,25 +105,38 @@ export function useRankings() {
         if (item.user_id) userIds.add(item.user_id)
       }
 
-      const userProfilesMap = new Map<string, { id: string; name: string | null; avatarUrl: string | null }>()
+      const userProfilesMap = new Map<
+        string,
+        { id: string; name: string | null; avatarUrl: string | null }
+      >()
       if (userIds.size > 0) {
         const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('id, name')
-          .in('id', Array.from(userIds))
+          .from("user_profiles")
+          .select("id, name")
+          .in("id", Array.from(userIds))
 
-        for (const profile of (profiles || []) as { id: string; name: string | null }[]) {
-          userProfilesMap.set(profile.id, { id: profile.id, name: profile.name, avatarUrl: null })
+        for (const profile of (profiles || []) as {
+          id: string
+          name: string | null
+        }[]) {
+          userProfilesMap.set(profile.id, {
+            id: profile.id,
+            name: profile.name,
+            avatarUrl: null,
+          })
         }
       }
 
-      const userStats = new Map<string, {
-        userId: string
-        userName: string | null
-        totalSpending: number
-        uniqueMenuItems: Set<string>
-        orderIds: Set<string>
-      }>()
+      const userStats = new Map<
+        string,
+        {
+          userId: string
+          userName: string | null
+          totalSpending: number
+          uniqueMenuItems: Set<string>
+          orderIds: Set<string>
+        }
+      >()
 
       for (const item of orderItems || []) {
         const userId = item.user_id
@@ -148,16 +164,19 @@ export function useRankings() {
 
       const groupByValue = (
         users: typeof allUsers,
-        getValue: (u: typeof allUsers[number]) => number
+        getValue: (u: (typeof allUsers)[number]) => number
       ) => {
-        const valueMap = new Map<number, Array<{ userId: string; userName: string; avatarUrl: string | null }>>()
+        const valueMap = new Map<
+          number,
+          Array<{ userId: string; userName: string; avatarUrl: string | null }>
+        >()
         for (const user of users) {
           const value = getValue(user)
           if (!valueMap.has(value)) valueMap.set(value, [])
           const profile = userProfilesMap.get(user.userId)
           valueMap.get(value)!.push({
             userId: user.userId,
-            userName: user.userName || '未知',
+            userName: user.userName || "未知",
             avatarUrl: profile?.avatarUrl || null,
           })
         }
@@ -184,9 +203,11 @@ export function useMyStats() {
     queryKey: queryKeys.stats.my,
     queryFn: async () => {
       const { data: orderItems, error } = await supabase
-        .from('bento_order_items')
-        .select('order_id, menu_item_id, menu_items:bento_menu_items(price, name, restaurant_id)')
-        .eq('user_id', user!.id)
+        .from("bento_order_items")
+        .select(
+          "order_id, menu_item_id, menu_items:bento_menu_items(price, name, restaurant_id)"
+        )
+        .eq("user_id", user!.id)
 
       if (error) throw error
 
@@ -201,20 +222,26 @@ export function useMyStats() {
       let restaurantMap = new Map<string, string>()
       if (restaurantIds.size > 0) {
         const { data: restaurants } = await supabase
-          .from('bento_menus')
-          .select('id, name')
-          .in('id', Array.from(restaurantIds))
+          .from("bento_menus")
+          .select("id, name")
+          .in("id", Array.from(restaurantIds))
 
         if (restaurants) {
           restaurantMap = new Map(
-            (restaurants as { id: string; name: string }[]).map((r) => [r.id, r.name])
+            (restaurants as { id: string; name: string }[]).map((r) => [
+              r.id,
+              r.name,
+            ])
           )
         }
       }
 
       const orderIdSet = new Set<string>()
       let totalSpending = 0
-      const restaurantItemCounts: Record<string, { name: string; count: number }> = {}
+      const restaurantItemCounts: Record<
+        string,
+        { name: string; count: number }
+      > = {}
 
       for (const item of orderItems || []) {
         orderIdSet.add(item.order_id)
@@ -222,13 +249,18 @@ export function useMyStats() {
         totalSpending += parseFloat(String(menuItem?.price || 0))
 
         const restaurantId = menuItem?.restaurant_id
-        const menuItemName = menuItem?.name || ''
-        const restaurantName = restaurantId ? (restaurantMap.get(restaurantId) || '') : ''
+        const menuItemName = menuItem?.name || ""
+        const restaurantName = restaurantId
+          ? restaurantMap.get(restaurantId) || ""
+          : ""
 
         if (restaurantName && menuItemName) {
           const key = `${restaurantId}_${item.menu_item_id}`
           if (!restaurantItemCounts[key]) {
-            restaurantItemCounts[key] = { name: `${restaurantName} ${menuItemName}`, count: 0 }
+            restaurantItemCounts[key] = {
+              name: `${restaurantName} ${menuItemName}`,
+              count: 0,
+            }
           }
           restaurantItemCounts[key].count += 1
         }

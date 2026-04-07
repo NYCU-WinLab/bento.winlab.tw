@@ -19,10 +19,10 @@ export function useAddOrderItem() {
 
   return useMutation({
     mutationFn: async (params: AddOrderItemParams) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new Error("Unauthorized")
 
       const { data, error } = await supabase
-        .from('bento_order_items')
+        .from("bento_order_items")
         .insert({
           order_id: params.order_id,
           menu_item_id: params.menu_item_id,
@@ -49,7 +49,7 @@ export function useAdminAddItem() {
   return useMutation({
     mutationFn: async (params: AddOrderItemParams & { user_id: string }) => {
       const { data, error } = await supabase
-        .from('bento_order_items')
+        .from("bento_order_items")
         .insert({
           order_id: params.order_id,
           menu_item_id: params.menu_item_id,
@@ -74,12 +74,14 @@ export function useAddAnonymousItem() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (params: AddOrderItemParams & {
-      anonymous_name: string
-      anonymous_contact: string
-    }) => {
+    mutationFn: async (
+      params: AddOrderItemParams & {
+        anonymous_name: string
+        anonymous_contact: string
+      }
+    ) => {
       const { data, error } = await supabase
-        .from('bento_order_items')
+        .from("bento_order_items")
         .insert({
           order_id: params.order_id,
           menu_item_id: params.menu_item_id,
@@ -108,9 +110,9 @@ export function useDeleteOrderItem() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('bento_order_items')
+        .from("bento_order_items")
         .delete()
-        .eq('id', id)
+        .eq("id", id)
       if (error) throw error
     },
     onSuccess: () => {

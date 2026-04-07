@@ -1,53 +1,53 @@
-"use client";
+"use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useGlobalStats } from "@/hooks/use-stats";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+} from "@/components/ui/chart"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useGlobalStats } from "@/hooks/use-stats"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 export function StatsDashboard() {
-  const { data, isLoading } = useGlobalStats();
+  const { data, isLoading } = useGlobalStats()
 
   if (isLoading && !data) {
     return (
-      <div className="flex flex-col gap-4 p-4 max-w-5xl mx-auto">
-        <Skeleton className="h-8 w-48 mx-2" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4">
+        <Skeleton className="mx-2 h-8 w-48" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-32 w-full rounded-xl" />
           ))}
         </div>
       </div>
-    );
+    )
   }
 
-  if (!data) return null;
+  if (!data) return null
 
-  const currentMonth = data.monthly[data.monthly.length - 1];
+  const currentMonth = data.monthly[data.monthly.length - 1]
 
   const chartConfig = {
     totalSpending: {
       label: "消費",
       color: "hsl(var(--chart-1))",
     },
-  } satisfies ChartConfig;
+  } satisfies ChartConfig
 
   const chartData = data.monthly.slice(-12).map((m) => ({
     month: `${m.month.slice(5)}月`,
     totalSpending: m.totalSpending,
-  }));
+  }))
 
   return (
-    <div className="flex flex-col gap-6 p-4 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mx-2">統計儀表板</h1>
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 p-4">
+      <h1 className="mx-2 text-2xl font-bold">統計儀表板</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">歷史訂單總數</p>
           <p className="text-3xl font-bold">{data.totalOrders}</p>
@@ -60,9 +60,7 @@ export function StatsDashboard() {
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">本月訂單數</p>
-          <p className="text-3xl font-bold">
-            {currentMonth?.totalOrders || 0}
-          </p>
+          <p className="text-3xl font-bold">{currentMonth?.totalOrders || 0}</p>
         </Card>
       </div>
 
@@ -132,23 +130,23 @@ export function StatsDashboard() {
 
       {data.topRestaurants.length > 0 && (
         <Card className="p-4">
-          <h2 className="text-lg font-semibold mb-4">最常訂購店家</h2>
+          <h2 className="mb-4 text-lg font-semibold">最常訂購店家</h2>
           <div className="space-y-3">
             {data.topRestaurants.map((r, i) => (
               <div key={r.name} className="flex items-center gap-3">
-                <span className="text-muted-foreground w-6 text-right text-sm">
+                <span className="w-6 text-right text-sm text-muted-foreground">
                   {i + 1}
                 </span>
                 <div className="flex-1">
-                  <div className="flex justify-between mb-1">
+                  <div className="mb-1 flex justify-between">
                     <span className="text-sm font-medium">{r.name}</span>
                     <span className="text-sm text-muted-foreground">
                       {r.count} 次
                     </span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary rounded-full"
+                      className="h-full rounded-full bg-primary"
                       style={{
                         width: `${(r.count / data.topRestaurants[0].count) * 100}%`,
                       }}
@@ -161,5 +159,5 @@ export function StatsDashboard() {
         </Card>
       )}
     </div>
-  );
+  )
 }

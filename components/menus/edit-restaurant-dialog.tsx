@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useUpdateMenu } from "@/hooks/use-menus";
-import { Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useUpdateMenu } from "@/hooks/use-menus"
+import { Pencil } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -12,30 +12,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface MenuItem {
-  id?: string;
-  name: string;
-  price: string | number;
-  type?: string | null;
+  id?: string
+  name: string
+  price: string | number
+  type?: string | null
 }
 
 type MenuParserItem = {
-  id?: string;
-  name: string;
-  price: string;
-  type?: string | null;
-};
+  id?: string
+  name: string
+  price: string
+  type?: string | null
+}
 
 interface Restaurant {
-  id: string;
-  name: string;
-  phone: string;
-  google_map_link?: string | null;
-  additional?: string[] | null;
+  id: string
+  name: string
+  phone: string
+  google_map_link?: string | null
+  additional?: string[] | null
 }
 
 export function EditRestaurantDialog({
@@ -43,20 +43,20 @@ export function EditRestaurantDialog({
   menuItems: existingMenuItems,
   onSuccess,
 }: {
-  restaurant: Restaurant;
-  menuItems: MenuItem[];
-  onSuccess: () => void;
+  restaurant: Restaurant
+  menuItems: MenuItem[]
+  onSuccess: () => void
 }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState(restaurant.name);
-  const [phone, setPhone] = useState(restaurant.phone);
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState(restaurant.name)
+  const [phone, setPhone] = useState(restaurant.phone)
   const [googleMapLink, setGoogleMapLink] = useState(
     restaurant.google_map_link ?? ""
-  );
+  )
   const [additionalOptions, setAdditionalOptions] = useState<string[]>(
     restaurant.additional || []
-  );
-  const [newAdditionalOption, setNewAdditionalOption] = useState("");
+  )
+  const [newAdditionalOption, setNewAdditionalOption] = useState("")
   const [menuItems, setMenuItems] = useState<MenuParserItem[]>(
     existingMenuItems
       .map((item) => ({
@@ -67,23 +67,23 @@ export function EditRestaurantDialog({
       }))
       .sort((a, b) => {
         if (a.type && b.type && a.type !== b.type) {
-          return a.type.localeCompare(b.type);
+          return a.type.localeCompare(b.type)
         }
-        if (a.type && !b.type) return -1;
-        if (!a.type && b.type) return 1;
-        const priceA = parseFloat(a.price) || 0;
-        const priceB = parseFloat(b.price) || 0;
-        return priceA - priceB;
+        if (a.type && !b.type) return -1
+        if (!a.type && b.type) return 1
+        const priceA = parseFloat(a.price) || 0
+        const priceB = parseFloat(b.price) || 0
+        return priceA - priceB
       })
-  );
-  const updateMenu = useUpdateMenu(restaurant.id);
+  )
+  const updateMenu = useUpdateMenu(restaurant.id)
 
   useEffect(() => {
     if (open) {
-      setName(restaurant.name);
-      setPhone(restaurant.phone);
-      setGoogleMapLink(restaurant.google_map_link ?? "");
-      setAdditionalOptions(restaurant.additional || []);
+      setName(restaurant.name)
+      setPhone(restaurant.phone)
+      setGoogleMapLink(restaurant.google_map_link ?? "")
+      setAdditionalOptions(restaurant.additional || [])
       setMenuItems(
         existingMenuItems
           .map((item) => ({
@@ -94,21 +94,21 @@ export function EditRestaurantDialog({
           }))
           .sort((a, b) => {
             if (a.type && b.type && a.type !== b.type) {
-              return a.type.localeCompare(b.type);
+              return a.type.localeCompare(b.type)
             }
-            if (a.type && !b.type) return -1;
-            if (!a.type && b.type) return 1;
-            const priceA = parseFloat(a.price) || 0;
-            const priceB = parseFloat(b.price) || 0;
-            return priceA - priceB;
+            if (a.type && !b.type) return -1
+            if (!a.type && b.type) return 1
+            const priceA = parseFloat(a.price) || 0
+            const priceB = parseFloat(b.price) || 0
+            return priceA - priceB
           })
-      );
+      )
     }
-  }, [open, existingMenuItems]);
+  }, [open, existingMenuItems])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !phone) return;
+    e.preventDefault()
+    if (!name || !phone) return
 
     try {
       await updateMenu.mutateAsync({
@@ -122,25 +122,25 @@ export function EditRestaurantDialog({
           type: item.type || null,
         })),
         additional: additionalOptions.length > 0 ? additionalOptions : null,
-      });
+      })
 
-      setOpen(false);
-      onSuccess();
+      setOpen(false)
+      onSuccess()
     } catch (error) {
-      console.error("Error updating restaurant:", error);
-      alert("更新店家失敗");
+      console.error("Error updating restaurant:", error)
+      alert("更新店家失敗")
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Pencil className="w-4 h-4 mr-2" />
+          <Pencil className="mr-2 h-4 w-4" />
           編輯
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle>編輯店家</DialogTitle>
           <DialogDescription>更新店家資訊與菜單</DialogDescription>
@@ -185,16 +185,18 @@ export function EditRestaurantDialog({
                     onChange={(e) => setNewAdditionalOption(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        e.preventDefault();
+                        e.preventDefault()
                         if (
                           newAdditionalOption.trim() &&
-                          !additionalOptions.includes(newAdditionalOption.trim())
+                          !additionalOptions.includes(
+                            newAdditionalOption.trim()
+                          )
                         ) {
                           setAdditionalOptions([
                             ...additionalOptions,
                             newAdditionalOption.trim(),
-                          ]);
-                          setNewAdditionalOption("");
+                          ])
+                          setNewAdditionalOption("")
                         }
                       }
                     }}
@@ -210,8 +212,8 @@ export function EditRestaurantDialog({
                         setAdditionalOptions([
                           ...additionalOptions,
                           newAdditionalOption.trim(),
-                        ]);
-                        setNewAdditionalOption("");
+                        ])
+                        setNewAdditionalOption("")
                       }
                     }}
                   >
@@ -223,7 +225,7 @@ export function EditRestaurantDialog({
                     {additionalOptions.map((option, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-md text-sm"
+                        className="flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-sm"
                       >
                         <span>{option}</span>
                         <button
@@ -231,7 +233,7 @@ export function EditRestaurantDialog({
                           onClick={() => {
                             setAdditionalOptions(
                               additionalOptions.filter((_, i) => i !== index)
-                            );
+                            )
                           }}
                           className="ml-1 text-muted-foreground hover:text-foreground"
                         >
@@ -252,12 +254,15 @@ export function EditRestaurantDialog({
             >
               取消
             </Button>
-            <Button type="submit" disabled={updateMenu.isPending || !name || !phone}>
+            <Button
+              type="submit"
+              disabled={updateMenu.isPending || !name || !phone}
+            >
               {updateMenu.isPending ? "更新中..." : "更新"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

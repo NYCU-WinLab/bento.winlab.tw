@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface TopRestaurantItem {
-  name: string;
-  count: number;
+  name: string
+  count: number
 }
 
 interface UserTopItemsProps {
-  data: TopRestaurantItem[];
-  loading?: boolean;
+  data: TopRestaurantItem[]
+  loading?: boolean
 }
 
 export function UserTopItems({ data, loading }: UserTopItemsProps) {
@@ -23,13 +23,13 @@ export function UserTopItems({ data, loading }: UserTopItemsProps) {
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded" />
+                <div className="h-4 rounded bg-muted" />
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -53,5 +53,5 @@ export function UserTopItems({ data, loading }: UserTopItemsProps) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

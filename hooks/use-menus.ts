@@ -16,9 +16,9 @@ export function useMenus() {
     queryKey: queryKeys.menus.all,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('bento_menus')
-        .select('*, menu_items:bento_menu_items(*)')
-        .order('name')
+        .from("bento_menus")
+        .select("*, menu_items:bento_menu_items(*)")
+        .order("name")
 
       if (error) throw error
       return data
@@ -33,9 +33,9 @@ export function useMenu(id: string | undefined) {
     queryKey: queryKeys.menus.detail(id!),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('bento_menus')
-        .select('*, menu_items:bento_menu_items(*)')
-        .eq('id', id!)
+        .from("bento_menus")
+        .select("*, menu_items:bento_menu_items(*)")
+        .eq("id", id!)
         .maybeSingle()
 
       if (error) throw error
@@ -52,16 +52,16 @@ export function useMenuStats(id: string | undefined) {
     queryKey: queryKeys.menus.stats(id!),
     queryFn: async () => {
       const { count: orderCount } = await supabase
-        .from('bento_orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('restaurant_id', id!)
-        .eq('status', 'closed')
+        .from("bento_orders")
+        .select("*", { count: "exact", head: true })
+        .eq("restaurant_id", id!)
+        .eq("status", "closed")
 
       const { data: closedOrders } = await supabase
-        .from('bento_orders')
-        .select('id')
-        .eq('restaurant_id', id!)
-        .eq('status', 'closed')
+        .from("bento_orders")
+        .select("id")
+        .eq("restaurant_id", id!)
+        .eq("status", "closed")
 
       let totalSpending = 0
       const itemCounts: Record<string, { count: number; total: number }> = {}
@@ -70,9 +70,9 @@ export function useMenuStats(id: string | undefined) {
         const orderIds = closedOrders.map((o) => o.id)
 
         const { data: orderItems } = await supabase
-          .from('bento_order_items')
-          .select('menu_item_id, menu_items:bento_menu_items(price)')
-          .in('order_id', orderIds)
+          .from("bento_order_items")
+          .select("menu_item_id, menu_items:bento_menu_items(price)")
+          .in("order_id", orderIds)
 
         if (orderItems) {
           for (const item of orderItems) {
@@ -91,15 +91,15 @@ export function useMenuStats(id: string | undefined) {
       }
 
       const { data: menuItems } = await supabase
-        .from('bento_menu_items')
-        .select('id, name, price')
-        .eq('restaurant_id', id!)
+        .from("bento_menu_items")
+        .select("id, name, price")
+        .eq("restaurant_id", id!)
 
       const menuItemIds = (menuItems || []).map((item) => item.id)
       const { data: allRatings } = await supabase
-        .from('bento_ratings')
-        .select('menu_item_id, score')
-        .in('menu_item_id', menuItemIds)
+        .from("bento_ratings")
+        .select("menu_item_id, score")
+        .in("menu_item_id", menuItemIds)
 
       const ratingMap = new Map<string, number[]>()
       for (const rating of allRatings || []) {
@@ -112,9 +112,10 @@ export function useMenuStats(id: string | undefined) {
       const items = (menuItems || []).map((item) => {
         const stats = itemCounts[item.id] || { count: 0, total: 0 }
         const ratings = ratingMap.get(item.id) || []
-        const avgRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-          : 0
+        const avgRating =
+          ratings.length > 0
+            ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+            : 0
 
         return {
           ...item,
@@ -154,7 +155,7 @@ export function useCreateMenu() {
       menu_items?: MenuItemInput[]
     }) => {
       const { data: menu, error } = await supabase
-        .from('bento_menus')
+        .from("bento_menus")
         .insert({
           name: params.name,
           phone: params.phone,
@@ -172,15 +173,16 @@ export function useCreateMenu() {
           .map((item) => ({
             restaurant_id: menu.id,
             name: item.name.trim(),
-            price: typeof item.price === 'number'
-              ? item.price
-              : parseFloat(String(item.price)) || 0,
+            price:
+              typeof item.price === "number"
+                ? item.price
+                : parseFloat(String(item.price)) || 0,
             type: item.type?.trim() || null,
           }))
 
         if (items.length > 0) {
           const { error: menuError } = await supabase
-            .from('bento_menu_items')
+            .from("bento_menu_items")
             .insert(items)
 
           if (menuError) throw menuError
@@ -212,15 +214,16 @@ export function useUpdateMenu(id: string) {
       }
       if (params.name !== undefined) updatePayload.name = params.name
       if (params.phone !== undefined) updatePayload.phone = params.phone
-      if (params.additional !== undefined) updatePayload.additional = params.additional
+      if (params.additional !== undefined)
+        updatePayload.additional = params.additional
       if (params.google_map_link !== undefined) {
         updatePayload.google_map_link = params.google_map_link?.trim() || null
       }
 
       const { data: menu, error } = await supabase
-        .from('bento_menus')
+        .from("bento_menus")
         .update(updatePayload)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single()
 
@@ -228,38 +231,61 @@ export function useUpdateMenu(id: string) {
 
       if (params.menu_items) {
         const { data: existingItems } = await supabase
-          .from('bento_menu_items')
-          .select('id')
-          .eq('restaurant_id', id)
+          .from("bento_menu_items")
+          .select("id")
+          .eq("restaurant_id", id)
 
-        const existingIds = new Set((existingItems || []).map((item) => item.id))
-        const itemsToUpdate: Array<{ id: string; name: string; price: number; type: string | null }> = []
-        const itemsToInsert: Array<{ restaurant_id: string; name: string; price: number; type: string | null }> = []
+        const existingIds = new Set(
+          (existingItems || []).map((item) => item.id)
+        )
+        const itemsToUpdate: Array<{
+          id: string
+          name: string
+          price: number
+          type: string | null
+        }> = []
+        const itemsToInsert: Array<{
+          restaurant_id: string
+          name: string
+          price: number
+          type: string | null
+        }> = []
 
         for (const item of params.menu_items) {
-          const parsedPrice = typeof item.price === 'number'
-            ? item.price
-            : parseFloat(String(item.price)) || 0
+          const parsedPrice =
+            typeof item.price === "number"
+              ? item.price
+              : parseFloat(String(item.price)) || 0
           const parsedType = item.type?.trim() || null
 
           if (item.id && existingIds.has(item.id)) {
-            itemsToUpdate.push({ id: item.id, name: item.name, price: parsedPrice, type: parsedType })
+            itemsToUpdate.push({
+              id: item.id,
+              name: item.name,
+              price: parsedPrice,
+              type: parsedType,
+            })
           } else {
-            itemsToInsert.push({ restaurant_id: id, name: item.name, price: parsedPrice, type: parsedType })
+            itemsToInsert.push({
+              restaurant_id: id,
+              name: item.name,
+              price: parsedPrice,
+              type: parsedType,
+            })
           }
         }
 
         for (const item of itemsToUpdate) {
           const { error: updateError } = await supabase
-            .from('bento_menu_items')
+            .from("bento_menu_items")
             .update({ name: item.name, price: item.price, type: item.type })
-            .eq('id', item.id)
+            .eq("id", item.id)
           if (updateError) throw updateError
         }
 
         if (itemsToInsert.length > 0) {
           const { error: insertError } = await supabase
-            .from('bento_menu_items')
+            .from("bento_menu_items")
             .insert(itemsToInsert)
           if (insertError) throw insertError
         }
@@ -281,10 +307,7 @@ export function useDeleteMenu(id: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from('bento_menus')
-        .delete()
-        .eq('id', id)
+      const { error } = await supabase.from("bento_menus").delete().eq("id", id)
       if (error) throw error
     },
     onSuccess: () => {

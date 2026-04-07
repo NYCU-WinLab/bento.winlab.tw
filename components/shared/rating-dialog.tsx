@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Star } from 'lucide-react'
-import { useAuth } from '@/contexts/auth-context'
-import { useMyRating, useRate } from '@/hooks/use-ratings'
+} from "@/components/ui/dialog"
+import { Star } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { useMyRating, useRate } from "@/hooks/use-ratings"
 
 export function RatingDialog({
   menuItemId,
@@ -50,8 +50,8 @@ export function RatingDialog({
       setOpen(false)
       onRatingSubmitted?.()
     } catch (error) {
-      console.error('Error submitting rating:', error)
-      alert('評分失敗')
+      console.error("Error submitting rating:", error)
+      alert("評分失敗")
     }
   }
 
@@ -63,8 +63,8 @@ export function RatingDialog({
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <Star className="w-4 h-4 mr-1" />
-          {userRating ? `${userRating} 星` : '評分'}
+          <Star className="mr-1 h-4 w-4" />
+          {userRating ? `${userRating} 星` : "評分"}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -82,27 +82,34 @@ export function RatingDialog({
                 className="focus:outline-none"
               >
                 <Star
-                  className={`w-8 h-8 ${
+                  className={`h-8 w-8 ${
                     score <= rating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
                   }`}
                 />
               </button>
             ))}
           </div>
           {rating > 0 && (
-            <p className="text-center mt-4 text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-sm text-muted-foreground">
               您選擇了 {rating} 星
             </p>
           )}
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+          >
             取消
           </Button>
-          <Button onClick={handleSubmit} disabled={rate.isPending || rating === 0}>
-            {rate.isPending ? '提交中...' : '提交'}
+          <Button
+            onClick={handleSubmit}
+            disabled={rate.isPending || rating === 0}
+          >
+            {rate.isPending ? "提交中..." : "提交"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -12,7 +12,7 @@ export function ThemeToggle() {
   // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => setMounted(true), [])
 
-  if (!mounted) return <div className="w-9 h-9" />
+  if (!mounted) return <div className="h-9 w-9" />
 
   return (
     <Button

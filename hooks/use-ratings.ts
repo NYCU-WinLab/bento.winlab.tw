@@ -12,15 +12,16 @@ export function useRatings(menuItemId: string | undefined) {
     queryKey: queryKeys.ratings.byItem(menuItemId!),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('bento_ratings')
-        .select('*')
-        .eq('menu_item_id', menuItemId!)
+        .from("bento_ratings")
+        .select("*")
+        .eq("menu_item_id", menuItemId!)
 
       if (error) throw error
 
-      const average = data && data.length > 0
-        ? data.reduce((sum, r) => sum + r.score, 0) / data.length
-        : 0
+      const average =
+        data && data.length > 0
+          ? data.reduce((sum, r) => sum + r.score, 0) / data.length
+          : 0
 
       return {
         ratings: data,
@@ -40,10 +41,10 @@ export function useMyRating(menuItemId: string | undefined) {
     queryKey: queryKeys.ratings.myRating(menuItemId!),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('bento_ratings')
-        .select('*')
-        .eq('menu_item_id', menuItemId!)
-        .eq('user_id', user!.id)
+        .from("bento_ratings")
+        .select("*")
+        .eq("menu_item_id", menuItemId!)
+        .eq("user_id", user!.id)
         .maybeSingle()
 
       if (error) throw error
@@ -60,10 +61,10 @@ export function useRate() {
 
   return useMutation({
     mutationFn: async (params: { menu_item_id: string; score: number }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new Error("Unauthorized")
 
       const { data, error } = await supabase
-        .from('bento_ratings')
+        .from("bento_ratings")
         .upsert(
           {
             menu_item_id: params.menu_item_id,
@@ -71,7 +72,7 @@ export function useRate() {
             score: params.score,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: 'menu_item_id,user_id' }
+          { onConflict: "menu_item_id,user_id" }
         )
         .select()
         .single()
@@ -80,8 +81,12 @@ export function useRate() {
       return data
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.ratings.byItem(variables.menu_item_id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.ratings.myRating(variables.menu_item_id) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.ratings.byItem(variables.menu_item_id),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.ratings.myRating(variables.menu_item_id),
+      })
     },
   })
 }

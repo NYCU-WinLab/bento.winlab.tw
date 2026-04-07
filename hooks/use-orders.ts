@@ -70,9 +70,11 @@ export function useOrders() {
     queryKey: queryKeys.orders.list(),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('bento_orders')
-        .select('*, restaurants:bento_menus(name, additional), order_items:bento_order_items(*, menu_items:bento_menu_items(name, price))')
-        .order('created_at', { ascending: false })
+        .from("bento_orders")
+        .select(
+          "*, restaurants:bento_menus(name, additional), order_items:bento_order_items(*, menu_items:bento_menu_items(name, price))"
+        )
+        .order("created_at", { ascending: false })
 
       if (error) throw error
 
@@ -91,9 +93,11 @@ export function useOrder(id: string | undefined) {
     queryKey: queryKeys.orders.detail(id!),
     queryFn: async () => {
       const { data: order, error } = await supabase
-        .from('bento_orders')
-        .select('*, restaurants:bento_menus(*), order_items:bento_order_items(*, menu_items:bento_menu_items(*))')
-        .eq('id', id!)
+        .from("bento_orders")
+        .select(
+          "*, restaurants:bento_menus(*), order_items:bento_order_items(*, menu_items:bento_menu_items(*))"
+        )
+        .eq("id", id!)
         .single()
 
       if (error) throw error
@@ -110,18 +114,24 @@ export function useOrder(id: string | undefined) {
 
         if (userIds.length > 0) {
           const { data: profiles } = await supabase
-            .from('user_profiles')
-            .select('id, name')
-            .in('id', userIds)
+            .from("user_profiles")
+            .select("id, name")
+            .in("id", userIds)
 
           const profileMap = new Map(
-            (profiles || []).map((p: { id: string; name: string | null }) => [p.id, p])
+            (profiles || []).map((p: { id: string; name: string | null }) => [
+              p.id,
+              p,
+            ])
           )
 
           order.order_items = items.map((item) => {
             if (item.user_id) {
               const profile = profileMap.get(item.user_id)
-              return { ...item, user: profile ? { name: profile.name || null } : null }
+              return {
+                ...item,
+                user: profile ? { name: profile.name || null } : null,
+              }
             }
             return {
               ...item,
@@ -129,10 +139,12 @@ export function useOrder(id: string | undefined) {
             }
           })
         } else {
-          order.order_items = (order.order_items as OrderItemWithUser[]).map((item) => ({
-            ...item,
-            user: item.anonymous_name ? { name: item.anonymous_name } : null,
-          }))
+          order.order_items = (order.order_items as OrderItemWithUser[]).map(
+            (item) => ({
+              ...item,
+              user: item.anonymous_name ? { name: item.anonymous_name } : null,
+            })
+          )
         }
       }
 
@@ -152,7 +164,7 @@ export function useCreateOrder() {
       p_order_date: string
       p_auto_close_at?: string | null
     }) => {
-      const { data, error } = await supabase.rpc('create_bento_order', {
+      const { data, error } = await supabase.rpc("create_bento_order", {
         p_restaurant_id: params.p_restaurant_id,
         p_order_date: params.p_order_date,
         p_auto_close_at: params.p_auto_close_at ?? null,
@@ -173,9 +185,9 @@ export function useCloseOrder() {
   return useMutation({
     mutationFn: async (orderId: string) => {
       const { data, error } = await supabase
-        .from('bento_orders')
-        .update({ status: 'closed', closed_at: new Date().toISOString() })
-        .eq('id', orderId)
+        .from("bento_orders")
+        .update({ status: "closed", closed_at: new Date().toISOString() })
+        .eq("id", orderId)
         .select()
         .single()
       if (error) throw error
@@ -194,9 +206,9 @@ export function useDeleteOrder() {
   return useMutation({
     mutationFn: async (orderId: string) => {
       const { error } = await supabase
-        .from('bento_orders')
+        .from("bento_orders")
         .delete()
-        .eq('id', orderId)
+        .eq("id", orderId)
       if (error) throw error
     },
     onSuccess: () => {
