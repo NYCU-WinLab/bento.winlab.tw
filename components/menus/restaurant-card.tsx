@@ -123,11 +123,11 @@ export function RestaurantCard({
             <div className="mb-4 grid grid-cols-2 gap-4">
               <div>
                 <p className="mb-1 text-base text-muted-foreground">結單次數</p>
-                <Skeleton className="h-7 w-12" />
+                <Skeleton className="h-8 w-12 rounded-md" />
               </div>
               <div>
                 <p className="mb-1 text-base text-muted-foreground">總消費</p>
-                <Skeleton className="h-7 w-20" />
+                <Skeleton className="h-8 w-24 rounded-md" />
               </div>
             </div>
             <div className="mt-4">
@@ -135,16 +135,15 @@ export function RestaurantCard({
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between rounded border p-2"
+                    className="flex items-center justify-between rounded-xl border px-4 py-2"
                   >
-                    <div className="flex-1">
+                    <div className="flex-1 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-20 rounded-md" />
+                        <Skeleton className="h-4 w-16 rounded-md" />
                       </div>
-                      <Skeleton className="mt-1 h-3 w-32" />
+                      <Skeleton className="h-3.5 w-24 rounded-md" />
                     </div>
-                    <Skeleton className="h-8 w-16" />
                   </div>
                 ))}
               </div>
