@@ -1,8 +1,8 @@
 "use client";
 
-import { TopParticipants } from "@/components/top-participants";
-import { TopSpenders } from "@/components/top-spenders";
-import { TopVariety } from "@/components/top-variety";
+import { TopParticipants } from "@/components/rankings/top-participants";
+import { TopSpenders } from "@/components/rankings/top-spenders";
+import { TopVariety } from "@/components/rankings/top-variety";
 import { useRankings } from "@/hooks/use-stats";
 
 export default function RankPage() {

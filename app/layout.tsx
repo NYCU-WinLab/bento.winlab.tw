@@ -1,9 +1,9 @@
 import "@/app/globals.css";
-import { Footer } from "@/components/footer";
-import HeaderBar from "@/components/header-bar";
+import { Footer } from "@/components/layout/footer";
+import HeaderBar from "@/components/layout/header-bar";
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
-import { RealtimeNotifications } from "@/components/realtime-notifications";
+import { RealtimeNotifications } from "@/components/layout/realtime-notifications";
 import { QueryProvider } from "@/components/query-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import type { Metadata } from "next";

@@ -1,5 +1,5 @@
-import { UserProfile } from '@/components/user-profile'
-import { UserStats } from '@/components/user-stats'
+import { UserProfile } from '@/components/shared/user-profile'
+import { UserStats } from '@/components/stats/user-stats'
 
 export default function MePage() {
   return (
