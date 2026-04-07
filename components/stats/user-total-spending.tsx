@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface UserTotalSpendingProps {
   value: number
@@ -15,9 +16,7 @@ export function UserTotalSpending({ value, loading }: UserTotalSpendingProps) {
           <CardTitle>總計消費</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse">
-            <div className="h-12 rounded bg-muted" />
-          </div>
+          <Skeleton className="h-12 w-32" />
         </CardContent>
       </Card>
     )

@@ -24,20 +24,20 @@ interface TopRankingCardProps {
 const rankStyles = {
   1: {
     badge:
-      "bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-950 shadow-lg shadow-yellow-500/50",
-    glow: "shadow-[0_0_20px_rgba(250,204,21,0.6)]",
+      "bg-rank-gold text-rank-gold-foreground shadow-lg shadow-rank-gold/50",
+    glow: "shadow-[0_0_20px_oklch(0.795_0.184_86/0.6)]",
     scale: 1.05,
   },
   2: {
     badge:
-      "bg-gradient-to-br from-gray-300 to-gray-500 text-gray-950 shadow-md shadow-gray-400/40",
-    glow: "shadow-[0_0_15px_rgba(156,163,175,0.4)]",
+      "bg-rank-silver text-rank-silver-foreground shadow-md shadow-rank-silver/40",
+    glow: "shadow-[0_0_15px_oklch(0.869_0.005_286/0.4)]",
     scale: 1.03,
   },
   3: {
     badge:
-      "bg-gradient-to-br from-amber-600 to-amber-800 text-amber-50 shadow-md shadow-amber-600/30",
-    glow: "shadow-[0_0_10px_rgba(217,119,6,0.3)]",
+      "bg-rank-bronze text-rank-bronze-foreground shadow-md shadow-rank-bronze/30",
+    glow: "shadow-[0_0_10px_oklch(0.645_0.246_16/0.3)]",
     scale: 1.01,
   },
 } as const
@@ -186,7 +186,9 @@ export function TopRankingCard({
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">尚無數據</p>
+          <div className="py-12 text-center text-muted-foreground">
+            尚無數據
+          </div>
         )}
       </CardContent>
     </Card>

@@ -95,7 +95,9 @@ export function OrderItemsList({
 
   if (items.length === 0) {
     return (
-      <div className="py-8 text-center text-muted-foreground">尚無訂餐項目</div>
+      <div className="py-12 text-center text-muted-foreground">
+        尚無訂餐項目
+      </div>
     )
   }
 
@@ -104,7 +106,7 @@ export function OrderItemsList({
       {groupedItemsArray.map((group, index) => {
         const isOver140 = group.total > 140
         const goldGlowStyle = isOver140
-          ? "shadow-[0_0_20px_rgba(250,204,21,0.6)] border-yellow-500/50"
+          ? "shadow-[0_0_20px_oklch(0.795_0.184_86/0.6)] border-rank-gold/50"
           : ""
 
         return (
@@ -112,9 +114,7 @@ export function OrderItemsList({
             <Item
               variant="outline"
               className={`text-lg ${goldGlowStyle} ${
-                isOver140
-                  ? "bg-linear-to-br from-yellow-50/50 to-yellow-100/30 dark:from-yellow-950/20 dark:to-yellow-900/10"
-                  : ""
+                isOver140 ? "bg-rank-gold/10" : ""
               }`}
             >
               <ItemContent className="flex-1">
@@ -172,9 +172,7 @@ export function OrderItemsList({
                   <div className="text-lg text-muted-foreground">總計</div>
                   <div
                     className={`text-lg ${
-                      isOver140
-                        ? "font-bold text-yellow-600 dark:text-yellow-500"
-                        : ""
+                      isOver140 ? "font-bold text-rank-gold-foreground" : ""
                     }`}
                   >
                     NT$ {group.total.toLocaleString()}

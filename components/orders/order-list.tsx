@@ -38,7 +38,7 @@ export function OrderList() {
 
       {closedOrders.length > 0 && (
         <div>
-          <h2 className="mx-2 mb-4 text-2xl font-semibold">已結束</h2>
+          <h2 className="mx-2 mb-4 text-xl font-semibold">已結束</h2>
           <div className="space-y-4">
             {closedOrders.map((order) => (
               <OrderCard key={order.id} order={order} />

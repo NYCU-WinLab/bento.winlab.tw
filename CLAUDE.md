@@ -18,7 +18,7 @@ Bento is an ordering system for NYCU WinLab (https://bento.winlab.tw). The UI is
 - **Framework**: Next.js 16 with App Router, React 19, TypeScript
 - **Package manager**: Bun
 - **Styling**: Tailwind CSS v4 (OKLCH color space, CSS variables, dark mode via `.dark` class)
-- **UI components**: Shadcn/ui (new-york style, zinc base color) in `components/ui/`
+- **UI components**: Shadcn/ui (radix-luma style, neutral base color) in `components/ui/`
 - **Database & Auth**: Supabase (SSR cookies, Keycloak primary + Google OAuth fallback)
 - **Data fetching**: TanStack Query v5
 - **Path alias**: `@/*` maps to project root

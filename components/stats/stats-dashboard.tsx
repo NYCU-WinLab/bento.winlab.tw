@@ -48,19 +48,33 @@ export function StatsDashboard() {
       <h1 className="mx-2 text-2xl font-bold">統計儀表板</h1>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">歷史訂單總數</p>
-          <p className="text-3xl font-bold">{data.totalOrders}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>歷史訂單總數</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{data.totalOrders}</p>
+          </CardContent>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">本月消費</p>
-          <p className="text-3xl font-bold">
-            ${(currentMonth?.totalSpending ?? 0).toLocaleString()}
-          </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>本月消費</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">
+              ${(currentMonth?.totalSpending ?? 0).toLocaleString()}
+            </p>
+          </CardContent>
         </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">本月訂單數</p>
-          <p className="text-3xl font-bold">{currentMonth?.totalOrders || 0}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>本月訂單數</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">
+              {currentMonth?.totalOrders || 0}
+            </p>
+          </CardContent>
         </Card>
       </div>
 
@@ -129,9 +143,11 @@ export function StatsDashboard() {
       )}
 
       {data.topRestaurants.length > 0 && (
-        <Card className="p-4">
-          <h2 className="mb-4 text-lg font-semibold">最常訂購店家</h2>
-          <div className="space-y-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>最常訂購店家</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {data.topRestaurants.map((r, i) => (
               <div key={r.name} className="flex items-center gap-3">
                 <span className="w-6 text-right text-sm text-muted-foreground">
@@ -155,7 +171,7 @@ export function StatsDashboard() {
                 </div>
               </div>
             ))}
-          </div>
+          </CardContent>
         </Card>
       )}
     </div>

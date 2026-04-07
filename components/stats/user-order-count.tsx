@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface UserOrderCountProps {
   value: number
@@ -15,9 +16,7 @@ export function UserOrderCount({ value, loading }: UserOrderCountProps) {
           <CardTitle>參與訂單數</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse">
-            <div className="h-12 rounded bg-muted" />
-          </div>
+          <Skeleton className="h-12 w-20" />
         </CardContent>
       </Card>
     )

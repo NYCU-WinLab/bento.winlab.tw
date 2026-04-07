@@ -69,13 +69,11 @@ export function RestaurantCard({
   }
 
   return (
-    <Card className="p-4">
-      <CardHeader className="p-0">
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold">
-              {restaurant.name}
-            </CardTitle>
+            <CardTitle className="text-xl">{restaurant.name}</CardTitle>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               {restaurant.google_map_link && (
                 <a
@@ -119,7 +117,7 @@ export function RestaurantCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent>
         {loading ? (
           <div className="space-y-4">
             <div className="mb-4 grid grid-cols-2 gap-4">

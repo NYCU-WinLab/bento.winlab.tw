@@ -82,10 +82,10 @@ export function RatingDialog({
                 className="focus:outline-none"
               >
                 <Star
-                  className={`h-8 w-8 ${
+                  className={`h-6 w-6 ${
                     score <= rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
+                      ? "fill-rank-gold text-rank-gold"
+                      : "text-muted-foreground"
                   }`}
                 />
               </button>

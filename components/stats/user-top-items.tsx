@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface TopRestaurantItem {
   name: string
@@ -22,9 +23,7 @@ export function UserTopItems({ data, loading }: UserTopItemsProps) {
         <CardContent>
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 rounded bg-muted" />
-              </div>
+              <Skeleton key={i} className="h-4 w-full" />
             ))}
           </div>
         </CardContent>
@@ -49,7 +48,9 @@ export function UserTopItems({ data, loading }: UserTopItemsProps) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">尚無數據</p>
+          <div className="py-12 text-center text-muted-foreground">
+            尚無數據
+          </div>
         )}
       </CardContent>
     </Card>

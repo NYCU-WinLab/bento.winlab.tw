@@ -332,7 +332,7 @@ export function AddOrderItemDialog({
               )}
           </div>
           {isAnonymous && showConfirm && (
-            <div className="mb-4 space-y-2 rounded-lg border border-yellow-500/50 bg-yellow-50/50 p-4 dark:bg-yellow-950/20">
+            <div className="mb-4 space-y-2 rounded-lg border border-rank-gold/50 bg-rank-gold/10 p-4">
               <p className="text-base font-semibold">請確認您的訂餐資訊：</p>
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>
