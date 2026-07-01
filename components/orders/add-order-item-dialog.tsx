@@ -10,7 +10,7 @@ import {
   useAdminAddItem,
   useAddAnonymousItem,
 } from "@/hooks/use-order-items"
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Trash2, Plus } from "lucide-react"
 
 interface MenuItem {
   id: string
@@ -38,6 +39,17 @@ interface MenuItem {
   price: number
   type?: string | null
   order_count?: number
+}
+
+interface CartItem {
+  key: number
+  menuItemId: string
+  noSauce: boolean
+  additional: number | null
+}
+
+function buildEmptyCartItem(key: number): CartItem {
+  return { key, menuItemId: "", noSauce: false, additional: null }
 }
 
 export function AddOrderItemDialog({
@@ -50,15 +62,13 @@ export function AddOrderItemDialog({
   trigger?: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState("")
-  const [noSauce, setNoSauce] = useState(false)
-  const [selectedAdditional, setSelectedAdditional] = useState<number | null>(
-    null
-  )
+  const [cartItems, setCartItems] = useState<CartItem[]>([buildEmptyCartItem(0)])
   const [targetUserId, setTargetUserId] = useState<string | null>(null)
   const [anonymousName, setAnonymousName] = useState("")
   const [anonymousContact, setAnonymousContact] = useState("")
   const [showConfirm, setShowConfirm] = useState(false)
+  const keyCounter = useRef(1)
+
   const { user } = useAuth()
   const { isAdmin: isAdminUser } = useAdmin()
   const isAnonymous = !user
@@ -109,22 +119,39 @@ export function AddOrderItemDialog({
   const handleOpenChange = (value: boolean) => {
     setOpen(value)
     if (value) {
-      if (
-        restaurantAdditionalOptions &&
-        restaurantAdditionalOptions.length > 0
-      ) {
-        setSelectedAdditional(0)
-      } else {
-        setSelectedAdditional(null)
+      const initial = buildEmptyCartItem(0)
+      if (restaurantAdditionalOptions && restaurantAdditionalOptions.length > 0) {
+        initial.additional = 0
       }
+      keyCounter.current = 1
+      setCartItems([initial])
+      setShowConfirm(false)
     }
+  }
+
+  const addCartRow = () => {
+    const key = keyCounter.current++
+    const item = buildEmptyCartItem(key)
+    if (restaurantAdditionalOptions && restaurantAdditionalOptions.length > 0) {
+      item.additional = 0
+    }
+    setCartItems((prev) => [...prev, item])
+  }
+
+  const removeCartRow = (key: number) => {
+    setCartItems((prev) => prev.filter((r) => r.key !== key))
+  }
+
+  const updateCartRow = (key: number, patch: Partial<Omit<CartItem, "key">>) => {
+    setCartItems((prev) =>
+      prev.map((r) => (r.key === key ? { ...r, ...patch } : r))
+    )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedItem) return
-    if (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim()))
-      return
+    if (cartItems.some((r) => !r.menuItemId)) return
+    if (isAnonymous && (!anonymousName.trim() || !anonymousContact.trim())) return
     if (!isAnonymous && !user) return
 
     if (isAnonymous && !showConfirm) {
@@ -137,36 +164,37 @@ export function AddOrderItemDialog({
 
   const doSubmit = async () => {
     try {
-      if (isAnonymous) {
-        await addAnonymousItem.mutateAsync({
-          order_id: orderId,
-          menu_item_id: selectedItem,
-          anonymous_name: anonymousName.trim(),
-          anonymous_contact: anonymousContact.trim(),
-          no_sauce: noSauce,
-          additional: selectedAdditional,
-        })
-      } else if (isAdminUser && targetUserId) {
-        await adminAddItem.mutateAsync({
-          order_id: orderId,
-          menu_item_id: selectedItem,
-          user_id: targetUserId,
-          no_sauce: noSauce,
-          additional: selectedAdditional,
-        })
-      } else {
-        await addItem.mutateAsync({
-          order_id: orderId,
-          menu_item_id: selectedItem,
-          no_sauce: noSauce,
-          additional: selectedAdditional,
-        })
+      for (const row of cartItems) {
+        if (isAnonymous) {
+          await addAnonymousItem.mutateAsync({
+            order_id: orderId,
+            menu_item_id: row.menuItemId,
+            anonymous_name: anonymousName.trim(),
+            anonymous_contact: anonymousContact.trim(),
+            no_sauce: row.noSauce,
+            additional: row.additional,
+          })
+        } else if (isAdminUser && targetUserId) {
+          await adminAddItem.mutateAsync({
+            order_id: orderId,
+            menu_item_id: row.menuItemId,
+            user_id: targetUserId,
+            no_sauce: row.noSauce,
+            additional: row.additional,
+          })
+        } else {
+          await addItem.mutateAsync({
+            order_id: orderId,
+            menu_item_id: row.menuItemId,
+            no_sauce: row.noSauce,
+            additional: row.additional,
+          })
+        }
       }
 
       setOpen(false)
-      setSelectedItem("")
-      setNoSauce(false)
-      setSelectedAdditional(null)
+      setCartItems([buildEmptyCartItem(0)])
+      keyCounter.current = 1
       setTargetUserId(null)
       setShowConfirm(false)
       onSuccess()
@@ -181,6 +209,41 @@ export function AddOrderItemDialog({
 
   const isPending =
     addItem.isPending || adminAddItem.isPending || addAnonymousItem.isPending
+
+  const renderMenuOptions = () => {
+    const grouped = new Map<string, MenuItem[]>()
+    menuItems.forEach((item) => {
+      const type = item.type || "其他"
+      if (!grouped.has(type)) grouped.set(type, [])
+      grouped.get(type)!.push(item)
+    })
+
+    const result: React.ReactElement[] = []
+    grouped.forEach((items, type) => {
+      if (grouped.size > 1) {
+        result.push(
+          <div
+            key={`header-${type}`}
+            className="sticky top-0 bg-muted/50 px-3 py-2 text-base font-semibold text-foreground backdrop-blur-sm"
+          >
+            {type}
+          </div>
+        )
+      }
+      items.forEach((item) => {
+        const orderCountText =
+          item.order_count && item.order_count > 0
+            ? `（${item.order_count} 個訂餐）`
+            : ""
+        result.push(
+          <SelectItem key={item.id} value={item.id} className="py-3 text-base">
+            {item.name} - NT$ {item.price.toLocaleString()} {orderCountText}
+          </SelectItem>
+        )
+      })
+    })
+    return result
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -236,101 +299,93 @@ export function AddOrderItemDialog({
               </Select>
             </div>
           )}
-          <div className="flex items-center gap-4 pb-4">
-            <div className="flex-1">
-              <Select value={selectedItem} onValueChange={setSelectedItem}>
-                <SelectTrigger id="menuItem" className="h-12 w-full text-base">
-                  <SelectValue placeholder="選擇品項" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const grouped = new Map<string, MenuItem[]>()
-                    menuItems.forEach((item) => {
-                      const type = item.type || "其他"
-                      if (!grouped.has(type)) {
-                        grouped.set(type, [])
-                      }
-                      grouped.get(type)!.push(item)
-                    })
 
-                    const result: React.ReactElement[] = []
-                    grouped.forEach((items, type) => {
-                      if (grouped.size > 1) {
-                        result.push(
-                          <div
-                            key={`header-${type}`}
-                            className="sticky top-0 bg-muted/50 px-3 py-2 text-base font-semibold text-foreground backdrop-blur-sm"
-                          >
-                            {type}
-                          </div>
-                        )
-                      }
-                      items.forEach((item) => {
-                        const orderCountText =
-                          item.order_count && item.order_count > 0
-                            ? `（${item.order_count} 個訂餐）`
-                            : ""
-                        result.push(
-                          <SelectItem
-                            key={item.id}
-                            value={item.id}
-                            className="py-3 text-base"
-                          >
-                            {item.name} - NT$ {item.price.toLocaleString()}{" "}
-                            {orderCountText}
-                          </SelectItem>
-                        )
-                      })
-                    })
-                    return result
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="noSauce"
-                  checked={noSauce}
-                  onCheckedChange={(checked) => setNoSauce(checked === true)}
-                />
-                <Label
-                  htmlFor="noSauce"
-                  className="cursor-pointer text-base whitespace-nowrap"
-                >
-                  不醬
-                </Label>
-              </div>
-            </div>
-            {restaurantAdditionalOptions &&
-              restaurantAdditionalOptions.length > 0 && (
-                <div className="flex items-center space-x-2">
+          <div className="space-y-3 pb-4">
+            {cartItems.map((row, idx) => (
+              <div key={row.key} className="flex items-center gap-2">
+                <div className="flex-1">
                   <Select
-                    value={
-                      selectedAdditional !== null
-                        ? selectedAdditional.toString()
-                        : undefined
-                    }
-                    onValueChange={(value) => {
-                      setSelectedAdditional(parseInt(value))
-                    }}
+                    value={row.menuItemId}
+                    onValueChange={(v) => updateCartRow(row.key, { menuItemId: v })}
                   >
-                    <SelectTrigger className="h-12 w-32 text-base">
-                      <SelectValue placeholder="額外選項" />
+                    <SelectTrigger className="h-12 w-full text-base">
+                      <SelectValue placeholder="選擇品項" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {restaurantAdditionalOptions.map(
-                        (option: string, index: number) => (
-                          <SelectItem key={index} value={index.toString()}>
-                            {option}
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
+                    <SelectContent>{renderMenuOptions()}</SelectContent>
                   </Select>
                 </div>
-              )}
+                <div className="flex items-center space-x-2 shrink-0">
+                  <Checkbox
+                    id={`noSauce-${row.key}`}
+                    checked={row.noSauce}
+                    onCheckedChange={(checked) =>
+                      updateCartRow(row.key, { noSauce: checked === true })
+                    }
+                  />
+                  <Label
+                    htmlFor={`noSauce-${row.key}`}
+                    className="cursor-pointer text-base whitespace-nowrap"
+                  >
+                    不醬
+                  </Label>
+                </div>
+                {restaurantAdditionalOptions &&
+                  restaurantAdditionalOptions.length > 0 && (
+                    <div className="shrink-0">
+                      <Select
+                        value={
+                          row.additional !== null
+                            ? row.additional.toString()
+                            : undefined
+                        }
+                        onValueChange={(value) =>
+                          updateCartRow(row.key, { additional: parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger className="h-12 w-32 text-base">
+                          <SelectValue placeholder="額外選項" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {restaurantAdditionalOptions.map(
+                            (option: string, index: number) => (
+                              <SelectItem key={index} value={index.toString()}>
+                                {option}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                {cartItems.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeCartRow(row.key)}
+                    aria-label={`移除第 ${idx + 1} 項`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
+
+          <div className="pb-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1 text-sm"
+              onClick={addCartRow}
+            >
+              <Plus className="h-4 w-4" />
+              新增品項
+            </Button>
+          </div>
+
           {isAnonymous && showConfirm && (
             <div className="mb-4 space-y-2 rounded-lg border border-rank-gold/50 bg-rank-gold/10 p-4">
               <p className="text-base font-semibold">請確認您的訂餐資訊：</p>
@@ -347,21 +402,28 @@ export function AddOrderItemDialog({
                     {anonymousContact}
                   </span>
                 </p>
-                <p>
-                  品項：
-                  <span className="font-medium text-foreground">
-                    {menuItems.find((item) => item.id === selectedItem)?.name ??
-                      ""}
-                    {noSauce ? "（不醬）" : ""}
-                    {selectedAdditional !== null &&
-                    restaurantAdditionalOptions?.[selectedAdditional]
-                      ? `（${restaurantAdditionalOptions[selectedAdditional]}）`
-                      : ""}
-                  </span>
-                </p>
+                <div className="space-y-0.5">
+                  <p>品項：</p>
+                  {cartItems.map((row, idx) => {
+                    const found = menuItems.find((m) => m.id === row.menuItemId)
+                    return (
+                      <p key={row.key} className="pl-2">
+                        <span className="font-medium text-foreground">
+                          {idx + 1}. {found?.name ?? ""}
+                          {row.noSauce ? "（不醬）" : ""}
+                          {row.additional !== null &&
+                          restaurantAdditionalOptions?.[row.additional]
+                            ? `（${restaurantAdditionalOptions[row.additional]}）`
+                            : ""}
+                        </span>
+                      </p>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
+
           <DialogFooter>
             {isAnonymous && showConfirm ? (
               <>
@@ -395,13 +457,17 @@ export function AddOrderItemDialog({
                   type="submit"
                   disabled={
                     isPending ||
-                    !selectedItem ||
+                    cartItems.some((r) => !r.menuItemId) ||
                     (isAnonymous &&
                       (!anonymousName.trim() || !anonymousContact.trim()))
                   }
                   className="h-11 text-base"
                 >
-                  {isPending ? "新增中..." : "新增"}
+                  {isPending
+                    ? "新增中..."
+                    : cartItems.length > 1
+                      ? `新增 ${cartItems.length} 項`
+                      : "新增"}
                 </Button>
               </>
             )}
