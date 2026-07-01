@@ -303,7 +303,7 @@ export function AddOrderItemDialog({
           <div className="space-y-3 pb-4">
             {cartItems.map((row, idx) => (
               <div key={row.key} className="flex items-center gap-2">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Select
                     value={row.menuItemId}
                     onValueChange={(v) => updateCartRow(row.key, { menuItemId: v })}
